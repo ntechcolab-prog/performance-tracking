@@ -1,10 +1,9 @@
 'use client'
 
 import Box from '@mui/material/Box'
-import TextField from '@mui/material/TextField'
-import MenuItem from '@mui/material/MenuItem'
-import InputAdornment from '@mui/material/InputAdornment'
 import Typography from '@mui/material/Typography'
+import { Select } from '@/src/ds/components/Select'
+import { Textfield } from '@/src/ds/components/Textfield'
 import { useLocalStorage } from '@/src/shared/lib/useLocalStorage'
 import { FormSectionV2, FieldV2 } from './settingsUi'
 
@@ -47,33 +46,21 @@ export function GeneralSettingsV2() {
       <FormSectionV2 title="Region & emissions">
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2.5 }}>
           <FieldV2 label="Country">
-            <TextField
-              select
-              fullWidth
-              size="small"
+            <Select
+              options={COUNTRIES.map((c) => ({ label: c, value: c }))}
               value={country}
-              onChange={(e) => setCountry(e.target.value)}
-            >
-              {COUNTRIES.map((c) => (
-                <MenuItem key={c} value={c}>
-                  {c}
-                </MenuItem>
-              ))}
-            </TextField>
+              onChange={setCountry}
+            />
           </FieldV2>
           <FieldV2 label="Carbon footprint reference factor">
-            <TextField
-              fullWidth
-              size="small"
+            <Textfield
               type="number"
+              min={0}
+              step={0.01}
               value={carbonFactor}
               onChange={(e) => setFactor(e.target.value === '' ? 0 : Number(e.target.value))}
-              slotProps={{
-                htmlInput: { min: 0, step: 0.01 },
-                input: {
-                  endAdornment: <InputAdornment position="end">kg CO₂e/kWh</InputAdornment>,
-                },
-              }}
+              trailingIcon={<span className="text-sm text-text-muted">kg CO₂e/kWh</span>}
+              className="pr-28"
             />
           </FieldV2>
         </Box>
@@ -111,49 +98,25 @@ export function DataExportSettingsV2() {
         </Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2.5 }}>
           <FieldV2 label="Frequency">
-            <TextField
-              select
-              fullWidth
-              size="small"
+            <Select
+              options={(['Off', 'Daily', 'Weekly', 'Monthly'] as const).map((o) => ({ label: o, value: o }))}
               value={s.schedule}
-              onChange={(e) => f('schedule', e.target.value as DataExport['schedule'])}
-            >
-              {(['Off', 'Daily', 'Weekly', 'Monthly'] as const).map((o) => (
-                <MenuItem key={o} value={o}>
-                  {o}
-                </MenuItem>
-              ))}
-            </TextField>
+              onChange={(v) => f('schedule', v as DataExport['schedule'])}
+            />
           </FieldV2>
           <FieldV2 label="Report content">
-            <TextField
-              select
-              fullWidth
-              size="small"
+            <Select
+              options={(['Summary', 'Full (all complete data)'] as const).map((o) => ({ label: o, value: o }))}
               value={s.content}
-              onChange={(e) => f('content', e.target.value as DataExport['content'])}
-            >
-              {(['Summary', 'Full (all complete data)'] as const).map((o) => (
-                <MenuItem key={o} value={o}>
-                  {o}
-                </MenuItem>
-              ))}
-            </TextField>
+              onChange={(v) => f('content', v as DataExport['content'])}
+            />
           </FieldV2>
           <FieldV2 label="Format">
-            <TextField
-              select
-              fullWidth
-              size="small"
+            <Select
+              options={(['PDF', 'CSV', 'XLSX'] as const).map((o) => ({ label: o, value: o }))}
               value={s.format}
-              onChange={(e) => f('format', e.target.value as DataExport['format'])}
-            >
-              {(['PDF', 'CSV', 'XLSX'] as const).map((o) => (
-                <MenuItem key={o} value={o}>
-                  {o}
-                </MenuItem>
-              ))}
-            </TextField>
+              onChange={(v) => f('format', v as DataExport['format'])}
+            />
           </FieldV2>
         </Box>
         <Typography variant="caption" sx={{ mt: 1.5, display: 'block', color: 'text.secondary' }}>

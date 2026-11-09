@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  BATCH BOOK VERSIONS — single source of truth
+//  PERFORMANCE TRACKING VERSIONS — single source of truth
 // ═══════════════════════════════════════════════════════════════════════════
 //
 //  v0  RESTRICTED edition. Not a separate codebase: it is the v1 app running

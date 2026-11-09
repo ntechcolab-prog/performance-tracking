@@ -1,7 +1,7 @@
 'use client'
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  BATCH BOOK v2 · LIVE — ENTRY POINT (real IRIS / Notify data)
+//  PERFORMANCE TRACKING v2 · LIVE — ENTRY POINT (real IRIS / Notify data)
 // ═══════════════════════════════════════════════════════════════════════════
 //  Mounted by app/iris-app/page.tsx, client-only, behind IRIS auth.
 //
@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
+import { Spinner } from '@/src/ds/components/Spinner'
 import Typography from '@mui/material/Typography'
 import { isAuthenticated } from '@/src/shared/api/tokenStore'
 import { activeOrganizationId, currentClaims } from '@/src/shared/api/auth'
@@ -61,7 +61,7 @@ export default function LiveApp() {
   if (!ready) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
+        <Spinner size="lg" />
       </Box>
     )
   }

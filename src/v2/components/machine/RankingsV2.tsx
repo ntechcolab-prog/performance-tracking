@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import Tooltip from '@mui/material/Tooltip'
+import { Tooltip } from '@/src/ds/components/Tooltip'
 import { chartPalette, iris } from '@/src/shared/client/mui/theme'
 import { withAlpha } from '@/src/shared/viz/metricViz'
 import type { Rankings, RankItem } from '@/src/shared/lib/compute'
@@ -106,8 +106,10 @@ function RankBars({ data, valueLabel }: { data: RankItem[]; valueLabel?: string 
             </Box>
           )
           return d.extra && d.extra.length > 0 ? (
-            <Tooltip key={d.label} title={<RankTooltip item={d} />} placement="top" arrow>
-              {bar}
+            // DS Tooltip takes over the trigger's mouse handlers, so it wraps the
+            // bar in its own div and the bar keeps its hover highlight.
+            <Tooltip key={d.label} content={<RankTooltip item={d} />} side="top" delay={100}>
+              <div>{bar}</div>
             </Tooltip>
           ) : (
             <Box key={d.label}>{bar}</Box>

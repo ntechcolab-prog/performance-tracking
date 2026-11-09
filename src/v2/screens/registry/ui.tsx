@@ -1,7 +1,9 @@
 'use client'
 
-import type { ReactNode } from 'react'
-import Card from '@mui/material/Card'
+import { forwardRef, type ReactNode } from 'react'
+import { Card } from '@/src/ds/components/Card'
+import { cn } from '@/src/ds/helpers/cn'
+import { Textfield, type TextfieldProps } from '@/src/ds/components/Textfield'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 
@@ -27,12 +29,10 @@ export function SectionCard({
   return (
     <Card
       id={id}
-      sx={{
-        p: 3,
-        scrollMarginTop: 16,
-        transition: 'border-color 0.15s, box-shadow 0.15s',
-        ...(editing && { borderColor: 'primary.main', boxShadow: (t) => `0 0 0 1px ${t.palette.primary.main}` }),
-      }}
+      className={cn(
+        'overflow-visible p-6 scroll-mt-4 transition-[border-color,box-shadow] duration-150',
+        editing && 'border-accent ring-1 ring-accent',
+      )}
     >
       <Box sx={{ mb: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
         <Typography
@@ -112,3 +112,24 @@ export function withAlpha(hex: string, a: number): string {
   const b = parseInt(h.slice(4, 6), 16)
   return `rgba(${r}, ${g}, ${b}, ${a})`
 }
+
+// Class names that mirror the DS <Table> look, for the tables the DS Table
+// cannot render (clickable rows, inline editors in header cells, colSpan rows).
+export const dsTable = {
+  wrap: 'overflow-x-auto rounded-card border border-border',
+  table: 'w-full border-collapse text-sm',
+  headRow: 'border-b border-border bg-surface-sunken',
+  th: 'px-4 py-3 text-left font-semibold text-text whitespace-nowrap',
+  row: 'border-b border-border last:border-0 odd:bg-surface-raised even:bg-surface transition-colors hover:bg-surface-sunken',
+  td: 'px-4 py-3 text-text',
+} as const
+
+// Compact DS text field for the inline row editors (fixed width, or full width).
+export const CellInput = forwardRef<HTMLInputElement, TextfieldProps & { width?: number }>(
+  ({ width, ...rest }, ref) => (
+    <div style={{ width: width ?? '100%' }}>
+      <Textfield ref={ref} className="h-8 px-2" {...rest} />
+    </div>
+  ),
+)
+CellInput.displayName = 'CellInput'

@@ -3,14 +3,11 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import MenuItem from '@mui/material/MenuItem'
-import Button from '@mui/material/Button'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Checkbox from '@mui/material/Checkbox'
-import Tooltip from '@mui/material/Tooltip'
-import RefreshIcon from '@mui/icons-material/Refresh'
-import ScienceIcon from '@mui/icons-material/ScienceOutlined'
+import { FlaskConical, RefreshCw } from 'lucide-react'
+import { Button } from '@/src/ds/components/Button'
+import { Checkbox } from '@/src/ds/components/Checkbox'
+import { Select } from '@/src/ds/components/Select'
+import { Tooltip } from '@/src/ds/components/Tooltip'
 import type { ResultsData } from '@/src/shared/data/batchForm'
 import { parseNumeric } from '@/src/shared/lib/expected'
 import { withAlpha } from './ui'
@@ -126,31 +123,42 @@ export default function BatchGraph({
   return (
     <>
       <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
-        <TextField select size="small" value={template} onChange={(e) => setTemplate(e.target.value)} sx={{ minWidth: 224 }}>
-          {GRAPH_TEMPLATES.map((t) => <MenuItem key={t.name} value={t.name}>{t.name}</MenuItem>)}
-        </TextField>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <FormControlLabel
-            control={<Checkbox size="small" checked={showStatus} onChange={(e) => setShowStatus(e.target.checked)} />}
-            label={<Typography variant="caption">Show Machine Status (Range)</Typography>}
+        <div className="min-w-56">
+          <Select
+            value={template}
+            options={GRAPH_TEMPLATES.map((t) => ({ label: t.name, value: t.name }))}
+            onChange={setTemplate}
+            className="[&>button]:h-8"
           />
-          {results && (
-            <Tooltip title={overlay.length ? '' : 'No samples inside the graph window yet'}>
-              <span>
-                <Button
-                  size="small"
-                  variant={showResults ? 'contained' : 'outlined'}
-                  startIcon={<ScienceIcon fontSize="small" />}
-                  disabled={overlay.length === 0}
-                  aria-pressed={showResults}
-                  onClick={() => setShowResults((v) => !v)}
-                >
-                  {showResults ? 'Hide Results' : 'Show Results'}
-                </Button>
-              </span>
-            </Tooltip>
-          )}
-          <Button size="small" variant="outlined" startIcon={<RefreshIcon fontSize="small" />}>Refresh Data</Button>
+        </div>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Checkbox
+            checked={showStatus}
+            onChange={(e) => setShowStatus(e.target.checked)}
+            label="Show Machine Status (Range)"
+            className="mr-2 text-xs"
+          />
+          {results && (() => {
+            const toggle = (
+              <Button
+                size="sm"
+                variant={showResults ? 'primary' : 'secondary'}
+                leadingIcon={<FlaskConical className="size-4" />}
+                disabled={overlay.length === 0}
+                aria-pressed={showResults}
+                onClick={() => setShowResults((v) => !v)}
+              >
+                {showResults ? 'Hide Results' : 'Show Results'}
+              </Button>
+            )
+            // The tooltip only explains why the toggle is disabled.
+            return overlay.length ? toggle : (
+              <Tooltip content="No samples inside the graph window yet">
+                <span tabIndex={0} className="inline-flex">{toggle}</span>
+              </Tooltip>
+            )
+          })()}
+          <Button size="sm" variant="secondary" leadingIcon={<RefreshCw className="size-4" />}>Refresh Data</Button>
         </Box>
       </Box>
 
@@ -185,9 +193,10 @@ export default function BatchGraph({
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography variant="caption" color="text.disabled">{s.unit}</Typography>
                   <Button
-                    size="small"
+                    size="sm"
+                    variant="ghost"
                     onClick={() => { toggleSeries(s.name, off); setHoverSensor(null) }}
-                    sx={{ minWidth: 0, py: 0, px: 0.75, fontSize: '0.6875rem', color: 'text.secondary' }}
+                    className="h-6 px-1.5 text-[0.6875rem] text-text-muted"
                   >
                     {off ? 'Show' : 'Hide'}
                   </Button>

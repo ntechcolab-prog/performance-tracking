@@ -5,9 +5,9 @@ import List from '@mui/material/List'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
-import Tooltip from '@mui/material/Tooltip'
-import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
+import { Tooltip } from '@/src/ds/components/Tooltip'
+import { Badge } from '@/src/ds/components/Badge'
+import { IconButton } from '@/src/ds/components/IconButton'
 import DashboardIcon from '@mui/icons-material/DashboardOutlined'
 import RegistryIcon from '@mui/icons-material/DescriptionOutlined'
 import AnalysisIcon from '@mui/icons-material/InsightsOutlined'
@@ -59,9 +59,8 @@ export default function SidebarV2({ open, active, onSelect, onToggle, restricted
         {NAV.map(({ key, label, Icon }) => {
           const disabled = isScreenGated(key, restricted)
           const isActive = key === active
-          return (
-            <Tooltip key={key} title={!open || disabled ? (disabled ? `${label} (coming soon)` : label) : ''} placement="right">
-              <span>
+          const tip = !open || disabled ? (disabled ? `${label} (coming soon)` : label) : ''
+          const item = (
                 <ListItemButton
                   disabled={disabled}
                   selected={isActive}
@@ -86,12 +85,16 @@ export default function SidebarV2({ open, active, onSelect, onToggle, restricted
                     />
                   )}
                   {open && disabled && (
-                    <Chip label="Soon" size="small"
-                      sx={{ height: 18, bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', fontSize: '0.625rem' }} />
+                    <Badge size="sm" className="h-[18px] bg-fullwhite/10 px-1.5 text-[0.625rem] text-fullwhite/40">Soon</Badge>
                   )}
                 </ListItemButton>
-              </span>
+          )
+          return tip ? (
+            <Tooltip key={key} content={tip} side="right">
+              <span className="block">{item}</span>
             </Tooltip>
+          ) : (
+            <span key={key} className="block">{item}</span>
           )
         })}
       </List>
@@ -99,18 +102,11 @@ export default function SidebarV2({ open, active, onSelect, onToggle, restricted
       <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.1)', p: 1.5 }}>
         <IconButton
           onClick={onToggle}
+          variant="ghost"
           aria-label={open ? 'Collapse menu' : 'Expand menu'}
-          sx={{
-            width: '100%',
-            borderRadius: 1.5,
-            py: 1.25,
-            color: 'rgba(255,255,255,0.7)',
-            justifyContent: 'center',
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)', color: '#fff' },
-          }}
-        >
-          <CollapseIcon sx={{ transform: open ? 'none' : 'rotate(180deg)', transition: 'transform 0.3s' }} />
-        </IconButton>
+          className="h-11 w-full text-fullwhite/70 hover:bg-fullwhite/10 hover:text-fullwhite"
+          icon={<CollapseIcon sx={{ transform: open ? 'none' : 'rotate(180deg)', transition: 'transform 0.3s' }} />}
+        />
       </Box>
     </Box>
   )

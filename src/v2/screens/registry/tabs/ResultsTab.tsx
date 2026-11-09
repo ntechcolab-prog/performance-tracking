@@ -3,24 +3,17 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import Button from '@mui/material/Button'
-import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
-import Table from '@mui/material/Table'
-import TableHead from '@mui/material/TableHead'
-import TableBody from '@mui/material/TableBody'
-import TableRow from '@mui/material/TableRow'
-import TableCell from '@mui/material/TableCell'
-import Tooltip from '@mui/material/Tooltip'
-import EditIcon from '@mui/icons-material/EditOutlined'
-import DeleteIcon from '@mui/icons-material/DeleteOutlined'
-import CheckIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
-import CloseIcon from '@mui/icons-material/Close'
+import { CircleCheck, Pencil, Trash2, X } from 'lucide-react'
+import { Button } from '@/src/ds/components/Button'
+import { Badge } from '@/src/ds/components/Badge'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Tooltip } from '@/src/ds/components/Tooltip'
+import { cn } from '@/src/ds/helpers/cn'
 import type { ResultsData, ResultRow } from '@/src/shared/data/batchForm'
 import { maskDate, maskTime } from '@/src/shared/lib/masks'
 import { deltaLabel } from '@/src/shared/lib/expected'
 import { EditableCard, useEditing } from '../cardEdit'
+import { CellInput, dsTable } from '../ui'
 
 const emptyDraft = (vars: string[]): ResultRow => ({
   date: '', time: '', values: Object.fromEntries(vars.map((v) => [v, ''])),
@@ -62,21 +55,18 @@ export default function ResultsTab({ value, onChange }: { value: ResultsData; on
     onChange({ ...value, rows: [...value.rows, sample] })
   }
 
-  const cell = { fontSize: '0.875rem' }
   const hasExpected = Object.keys(value.expected ?? {}).length > 0
   // "Last Sample" = the most recent row that has at least one measured value.
   const lastSample = [...value.rows].reverse().find((r) => value.variables.some((v) => (r.values[v] ?? '') !== ''))
-  const summaryRow = { '& td': { bgcolor: 'background.default', py: 1 } }
-  const summaryLabel = {
-    fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase',
-    letterSpacing: '0.04em', color: 'text.secondary',
-  }
+  const td = cn(dsTable.td, 'py-2')
+  const summaryTd = cn(td, 'bg-surface-sunken/60')
+  const summaryLabel = 'text-[0.6875rem] font-semibold uppercase tracking-[0.04em] text-text-muted'
 
   return (
     <EditableCard
       cardId="results"
       title="Enter Test Results"
-      extraAction={on && <Button size="small" variant="outlined" onClick={importSample}>Import</Button>}
+      extraAction={on && <Button size="sm" variant="secondary" onClick={importSample}>Import</Button>}
     >
       <Typography variant="body2" color="text.secondary">
         {on ? 'Enter each sample in the grey row and press + Add row.' : 'Measured values for each variable of this batch.'}
@@ -85,123 +75,119 @@ export default function ResultsTab({ value, onChange }: { value: ResultsData; on
       {/* Variables mirror Product → Expected Results and are managed only there. */}
       {value.variables.length > 0 && (
         <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
-          {value.variables.map((v) => <Chip key={v} label={v} color="primary" size="small" />)}
+          {value.variables.map((v) => <Badge key={v} variant="accent" size="sm">{v}</Badge>)}
           <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
             Variables are managed in Product → Expected Results.
           </Typography>
         </Box>
       )}
 
-      <Box sx={{ mt: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: 2, overflowX: 'auto' }}>
-        <Table size="small" sx={{ minWidth: 640 }}>
-          <TableHead>
-            <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 500, bgcolor: 'background.default' } }}>
-              <TableCell>DATE</TableCell>
-              <TableCell>Time</TableCell>
-              {value.variables.map((v) => <TableCell key={v}>{v}</TableCell>)}
-              <TableCell align="right" />
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <div className={cn(dsTable.wrap, 'mt-5')}>
+        <table className={cn(dsTable.table, 'min-w-[640px]')}>
+          <thead>
+            <tr className={dsTable.headRow}>
+              <th scope="col" className={cn(dsTable.th, 'py-2')}>DATE</th>
+              <th scope="col" className={cn(dsTable.th, 'py-2')}>Time</th>
+              {value.variables.map((v) => <th key={v} scope="col" className={cn(dsTable.th, 'py-2')}>{v}</th>)}
+              <th scope="col" className={cn(dsTable.th, 'py-2')}><span className="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
             {/* Target vs last sample, aligned with each variable column.
                 Only rendered once the batch has at least one expected value. */}
             {hasExpected && (
               <>
-                <TableRow sx={summaryRow}>
-                  <TableCell sx={summaryLabel}>Expected</TableCell>
-                  <TableCell />
+                <tr className="border-b border-border">
+                  <td className={cn(summaryTd, summaryLabel)}>Expected</td>
+                  <td className={summaryTd} />
                   {value.variables.map((v) => (
-                    <TableCell key={v} sx={{ ...cell, fontVariantNumeric: 'tabular-nums' }}>
+                    <td key={v} className={cn(summaryTd, 'tabular-nums')}>
                       {value.expected?.[v] || '—'}
-                    </TableCell>
+                    </td>
                   ))}
-                  <TableCell />
-                </TableRow>
-                <TableRow sx={{ ...summaryRow, '& td': { ...summaryRow['& td'], borderBottom: '2px solid', borderBottomColor: 'divider' } }}>
-                  <TableCell sx={{ ...cell, verticalAlign: 'top' }}>
-                    <Box component="span" sx={{ ...summaryLabel, display: 'block' }}>Last Sample</Box>
+                  <td className={summaryTd} />
+                </tr>
+                <tr className="border-b-2 border-border">
+                  <td className={cn(summaryTd, 'align-top')}>
+                    <span className={cn(summaryLabel, 'block')}>Last Sample</span>
                     {lastSample?.date || '—'}
-                  </TableCell>
-                  <TableCell sx={{ ...cell, color: 'text.secondary', verticalAlign: 'bottom' }}>{lastSample?.time || ''}</TableCell>
+                  </td>
+                  <td className={cn(summaryTd, 'align-bottom text-text-muted')}>{lastSample?.time || ''}</td>
                   {value.variables.map((v) => {
                     const current = lastSample?.values[v] ?? ''
                     const diff = deltaLabel(value.expected?.[v], current)
                     return (
-                      <TableCell key={v} sx={{ ...cell, fontVariantNumeric: 'tabular-nums', verticalAlign: 'bottom' }}>
+                      <td key={v} className={cn(summaryTd, 'align-bottom tabular-nums')}>
                         {current || '—'}
-                        {diff && (
-                          <Box component="span" sx={{ display: 'block', fontSize: '0.6875rem', color: 'text.secondary' }}>
-                            {diff}
-                          </Box>
-                        )}
-                      </TableCell>
+                        {diff && <span className="block text-[0.6875rem] text-text-muted">{diff}</span>}
+                      </td>
                     )
                   })}
-                  <TableCell />
-                </TableRow>
+                  <td className={summaryTd} />
+                </tr>
               </>
             )}
 
             {value.rows.map((r, i) =>
               on && editRow === i ? (
-                <TableRow key={i} sx={{ bgcolor: 'background.default' }}>
-                  <TableCell><TextField size="small" value={rowDraft.date} onChange={(e) => setRowDraft({ ...rowDraft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" sx={{ width: 120 }} /></TableCell>
-                  <TableCell><TextField size="small" value={rowDraft.time} onChange={(e) => setRowDraft({ ...rowDraft, time: maskTime(e.target.value) })} placeholder="00:00:00" sx={{ width: 100 }} /></TableCell>
+                <tr key={i} className="border-b border-border bg-surface-sunken/60">
+                  <td className={td}><CellInput width={120} value={rowDraft.date} onChange={(e) => setRowDraft({ ...rowDraft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label={`Row ${i + 1} date`} /></td>
+                  <td className={td}><CellInput width={100} value={rowDraft.time} onChange={(e) => setRowDraft({ ...rowDraft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label={`Row ${i + 1} time`} /></td>
                   {value.variables.map((v) => (
-                    <TableCell key={v}>
-                      <TextField size="small" value={rowDraft.values[v] ?? ''} onChange={(e) => setRowDraft({ ...rowDraft, values: { ...rowDraft.values, [v]: e.target.value } })} placeholder="0000" sx={{ width: 84 }} />
-                    </TableCell>
+                    <td key={v} className={td}>
+                      <CellInput width={84} value={rowDraft.values[v] ?? ''} onChange={(e) => setRowDraft({ ...rowDraft, values: { ...rowDraft.values, [v]: e.target.value } })} placeholder="0000" aria-label={`Row ${i + 1} ${v}`} />
+                    </td>
                   ))}
-                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                    <IconButton size="small" color="success" onClick={saveRowEdit} aria-label={`Save row ${i + 1}`}><CheckIcon fontSize="small" /></IconButton>
-                    <IconButton size="small" onClick={() => setEditRow(null)} aria-label="Cancel"><CloseIcon fontSize="small" /></IconButton>
-                  </TableCell>
-                </TableRow>
+                  <td className={cn(td, 'whitespace-nowrap text-right')}>
+                    <IconButton size="sm" variant="ghost" className="text-success" onClick={saveRowEdit} aria-label={`Save row ${i + 1}`} icon={<CircleCheck className="size-4" />} />
+                    <IconButton size="sm" variant="ghost" onClick={() => setEditRow(null)} aria-label="Cancel" icon={<X className="size-4" />} />
+                  </td>
+                </tr>
               ) : (
-                <TableRow key={i} hover>
-                  <TableCell sx={cell}>{r.date}</TableCell>
-                  <TableCell sx={{ ...cell, color: 'text.secondary' }}>{r.time}</TableCell>
+                <tr key={i} className={dsTable.row}>
+                  <td className={td}>{r.date}</td>
+                  <td className={cn(td, 'text-text-muted')}>{r.time}</td>
                   {value.variables.map((v) => (
-                    <TableCell key={v} sx={{ ...cell, fontVariantNumeric: 'tabular-nums' }}>{r.values[v] || '—'}</TableCell>
+                    <td key={v} className={cn(td, 'tabular-nums')}>{r.values[v] || '—'}</td>
                   ))}
-                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                  <td className={cn(td, 'whitespace-nowrap text-right')}>
                     {on && (
                       <>
-                        <Tooltip title="Edit"><IconButton size="small" onClick={() => startRowEdit(i)} aria-label={`Edit row ${i + 1}`}><EditIcon fontSize="small" /></IconButton></Tooltip>
-                        <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => removeRow(i)} aria-label={`Delete row ${i + 1}`}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
+                        <Tooltip content="Edit"><IconButton size="sm" variant="ghost" onClick={() => startRowEdit(i)} aria-label={`Edit row ${i + 1}`} icon={<Pencil className="size-4" />} /></Tooltip>
+                        <Tooltip content="Delete"><IconButton size="sm" variant="ghost" className="text-danger" onClick={() => removeRow(i)} aria-label={`Delete row ${i + 1}`} icon={<Trash2 className="size-4" />} /></Tooltip>
                       </>
                     )}
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               )
             )}
 
             {value.rows.length === 0 && !on && (
-              <TableRow>
-                <TableCell colSpan={value.variables.length + 3} sx={{ py: 2.5, color: 'text.secondary', fontSize: '0.875rem' }}>
+              <tr>
+                <td colSpan={value.variables.length + 3} className="px-4 py-5 text-text-muted">
                   No samples yet.
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             )}
 
             {/* input row — the last grey row, with + Add row at its end */}
             {on && (
-              <TableRow sx={{ bgcolor: 'background.default' }}>
-                <TableCell><TextField size="small" value={draft.date} onChange={(e) => setDraft({ ...draft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" sx={{ width: 120 }} slotProps={{ htmlInput: { 'aria-label': 'New sample date' } }} /></TableCell>
-                <TableCell><TextField size="small" value={draft.time} onChange={(e) => setDraft({ ...draft, time: maskTime(e.target.value) })} placeholder="00:00:00" sx={{ width: 100 }} slotProps={{ htmlInput: { 'aria-label': 'New sample time' } }} /></TableCell>
+              <tr className="bg-surface-sunken/60">
+                <td className={td}><CellInput width={120} value={draft.date} onChange={(e) => setDraft({ ...draft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label="New sample date" /></td>
+                <td className={td}><CellInput width={100} value={draft.time} onChange={(e) => setDraft({ ...draft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label="New sample time" /></td>
                 {value.variables.map((v) => (
-                  <TableCell key={v}>
-                    <TextField size="small" value={draft.values[v] ?? ''} onChange={(e) => setDraft({ ...draft, values: { ...draft.values, [v]: e.target.value } })} onKeyDown={(e) => e.key === 'Enter' && addRow()} placeholder="0000" sx={{ width: 84 }} slotProps={{ htmlInput: { 'aria-label': `New sample ${v}` } }} />
-                  </TableCell>
+                  <td key={v} className={td}>
+                    <CellInput width={84} value={draft.values[v] ?? ''} onChange={(e) => setDraft({ ...draft, values: { ...draft.values, [v]: e.target.value } })} onKeyDown={(e) => e.key === 'Enter' && addRow()} placeholder="0000" aria-label={`New sample ${v}`} />
+                  </td>
                 ))}
-                <TableCell align="right">
-                  <Button size="small" variant="outlined" onClick={addRow} sx={{ whiteSpace: 'nowrap' }}>+ Add row</Button>
-                </TableCell>
-              </TableRow>
+                <td className={cn(td, 'text-right')}>
+                  <Button size="sm" variant="secondary" onClick={addRow} className="whitespace-nowrap">+ Add row</Button>
+                </td>
+              </tr>
             )}
-          </TableBody>
-        </Table>
-      </Box>
+          </tbody>
+        </table>
+      </div>
     </EditableCard>
   )
 }

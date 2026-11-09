@@ -1,14 +1,9 @@
 'use client'
 
 import { createContext, useContext, type ReactNode } from 'react'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import DialogActions from '@mui/material/DialogActions'
-import EditIcon from '@mui/icons-material/EditOutlined'
+import { Pencil } from 'lucide-react'
+import { Button } from '@/src/ds/components/Button'
+import { Modal } from '@/src/ds/components/Modal'
 import { SectionCard } from './ui'
 
 // Card-based editing for the batch editor (NOTI-6052, Manager Tool pattern):
@@ -64,11 +59,11 @@ export function EditableCard({
 
   const action = on ? (
     <>
-      <Button size="small" variant="outlined" onClick={discard}>Discard</Button>
-      <Button size="small" variant="contained" onClick={save}>Save</Button>
+      <Button size="sm" variant="secondary" onClick={discard}>Discard</Button>
+      <Button size="sm" variant="primary" onClick={save}>Save</Button>
     </>
   ) : canEdit ? (
-    <Button size="small" variant="outlined" startIcon={<EditIcon fontSize="small" />} onClick={() => start(cardId)} aria-label={`Edit ${title}`}>
+    <Button size="sm" variant="secondary" leadingIcon={<Pencil className="size-4" />} onClick={() => start(cardId)} aria-label={`Edit ${title}`}>
       Edit
     </Button>
   ) : null
@@ -79,10 +74,10 @@ export function EditableCard({
       id={id}
       editing={on}
       action={(action || extraAction) && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <div className="flex items-center gap-2">
           {extraAction}
           {action}
-        </Box>
+        </div>
       )}
     >
       {children}
@@ -102,17 +97,21 @@ export function UnsavedDialog({
   onClose: () => void
 }) {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth aria-labelledby="unsaved-title">
-      <DialogTitle id="unsaved-title">Unsaved changes</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          You changed this card but did not save it. Do you want to save your changes before leaving?
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button variant="outlined" onClick={onDiscard}>Discard changes</Button>
-        <Button variant="contained" onClick={onSave}>Save changes</Button>
-      </DialogActions>
-    </Dialog>
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="sm"
+      title="Unsaved changes"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onDiscard}>Discard changes</Button>
+          <Button variant="primary" onClick={onSave}>Save changes</Button>
+        </>
+      }
+    >
+      <p className="text-text-muted">
+        You changed this card but did not save it. Do you want to save your changes before leaving?
+      </p>
+    </Modal>
   )
 }

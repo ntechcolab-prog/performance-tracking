@@ -6,9 +6,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
+import { Card } from '@/src/ds/components/Card'
 import Typography from '@mui/material/Typography'
-import CircularProgress from '@mui/material/CircularProgress'
+import { Spinner } from '@/src/ds/components/Spinner'
 import IrisNav from '@/src/shared/client/iris/IrisNav'
 import { isAuthenticated } from '@/src/shared/api/tokenStore'
 import MetricsGridV2Mui from '@/src/v2/components/metrics/MetricsGridV2Mui'
@@ -52,19 +52,19 @@ export default function LiveDashboard() {
       </Box>
 
       {error && (
-        <Card sx={{ p: 3 }}>
+        <Card className="p-6">
           <Typography color="error">{error}</Typography>
         </Card>
       )}
 
       {!kpis && !error && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
-          <CircularProgress />
+          <Spinner size="lg" />
         </Box>
       )}
 
       {kpis && (
-        <Card sx={{ p: 2, overflow: 'hidden' }}>
+        <Card className="p-4">
           <MetricsGridV2Mui kpis={kpis} series={{}} />
         </Card>
       )}

@@ -1,9 +1,9 @@
 'use client'
 
-import Card from '@mui/material/Card'
+import { Card } from '@/src/ds/components/Card'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
+import { Button } from '@/src/ds/components/Button'
 import ArrowUpIcon from '@mui/icons-material/ArrowDropUp'
 import ArrowDownIcon from '@mui/icons-material/ArrowDropDown'
 import type { EChartsOption } from 'echarts'
@@ -59,7 +59,7 @@ export default function KpiCardV2({
   const area = kind === 'area'
 
   return (
-    <Card sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Card className="flex h-full flex-col p-4">
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
           <Box sx={{ width: 28, height: 28, flexShrink: 0, borderRadius: 1.25, display: 'grid', placeItems: 'center',
@@ -100,7 +100,7 @@ export default function KpiCardV2({
           {VIZ_CAPTION[kpi.key] ?? 'vs last month'}
         </Typography>
         {onDetails && (
-          <Button size="small" onClick={() => onDetails(kpi)} sx={{ minWidth: 0, p: 0.5 }}>Details</Button>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-accent" onClick={() => onDetails(kpi)}>Details</Button>
         )}
       </Box>
     </Card>

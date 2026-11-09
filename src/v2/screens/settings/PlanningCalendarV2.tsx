@@ -3,10 +3,10 @@
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import TextField from '@mui/material/TextField'
-import Tooltip from '@mui/material/Tooltip'
-import Switch from '@mui/material/Switch'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Textfield } from '@/src/ds/components/Textfield'
+import { Tooltip } from '@/src/ds/components/Tooltip'
+import { Switch } from '@/src/ds/components/Switch'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import RemoveIcon from '@mui/icons-material/Remove'
@@ -111,15 +111,11 @@ export default function PlanningCalendarV2({
     <Box>
       {/* Month nav */}
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <IconButton onClick={onPrev} aria-label="Previous month" size="small" sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
-          <ChevronLeftIcon fontSize="small" />
-        </IconButton>
+        <IconButton onClick={onPrev} aria-label="Previous month" size="sm" variant="secondary" icon={<ChevronLeftIcon fontSize="small" />} />
         <Typography sx={{ minWidth: '9.5rem', textAlign: 'center', fontWeight: 600, color: 'text.primary' }}>
           {MONTH_NAMES[month]} {year}
         </Typography>
-        <IconButton onClick={onNext} aria-label="Next month" size="small" sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
-          <ChevronRightIcon fontSize="small" />
-        </IconButton>
+        <IconButton onClick={onNext} aria-label="Next month" size="sm" variant="secondary" icon={<ChevronRightIcon fontSize="small" />} />
       </Box>
 
       {/* Summary strip */}
@@ -254,8 +250,7 @@ function DayPlanCell({
   const tint = editable && hasHours ? tintFor(hours, maxHours) : undefined
   const bg = tint ?? (isHoliday && !editable ? '#fdf3e2' : !editable ? 'rgba(246,246,246,0.5)' : undefined)
 
-  return (
-    <Tooltip title={holidayLabel ?? ''} disableHoverListener={!holidayLabel}>
+  const cell = (
       <Box
         sx={{
           position: 'relative', display: 'flex', flexDirection: 'column', minHeight: '6rem', p: 1,
@@ -297,38 +292,35 @@ function DayPlanCell({
                 }}
               >
                 <IconButton
-                  size="small"
+                  size="sm"
+                  variant="ghost"
                   aria-label="Decrease hours"
                   onClick={() => onSet(Math.max(0, Math.round((hours - 1) * 2) / 2))}
-                  sx={{ color: 'text.secondary' }}
-                >
-                  <RemoveIcon fontSize="small" />
-                </IconButton>
-                <TextField
-                  variant="standard"
-                  type="number"
-                  value={hours}
-                  onChange={(e) => {
-                    const v = e.target.value === '' ? 0 : Number(e.target.value)
-                    onSet(Number.isFinite(v) ? Math.max(0, v) : 0)
-                  }}
-                  slotProps={{
-                    htmlInput: {
-                      min: 0, step: 0.5,
-                      style: { textAlign: 'center', fontWeight: 700, MozAppearance: 'textfield' },
-                    },
-                    input: { disableUnderline: true },
-                  }}
-                  sx={{ width: '2.5rem', '& input': { color: hasHours ? 'text.primary' : 'text.disabled' } }}
+                  className="size-7 shrink-0 text-text-muted"
+                  icon={<RemoveIcon fontSize="small" />}
                 />
+                <div className="w-10">
+                  <Textfield
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    aria-label={`Day ${day} hours`}
+                    value={hours}
+                    onChange={(e) => {
+                      const v = e.target.value === '' ? 0 : Number(e.target.value)
+                      onSet(Number.isFinite(v) ? Math.max(0, v) : 0)
+                    }}
+                    className={`h-7 [appearance:textfield] border-0 bg-transparent px-0 text-center font-bold [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${hasHours ? 'text-text' : 'text-text-subtle'}`}
+                  />
+                </div>
                 <IconButton
-                  size="small"
+                  size="sm"
+                  variant="ghost"
                   aria-label="Increase hours"
                   onClick={() => onSet(Math.round((hours + 1) * 2) / 2)}
-                  sx={{ color: 'text.secondary' }}
-                >
-                  <AddIcon fontSize="small" />
-                </IconButton>
+                  className="size-7 shrink-0 text-text-muted"
+                  icon={<AddIcon fontSize="small" />}
+                />
               </Box>
               {!hasHours && (
                 <Typography sx={{ mt: 0.5, textAlign: 'center', fontSize: '0.5625rem', color: 'text.disabled' }}>
@@ -344,18 +336,19 @@ function DayPlanCell({
               sx={{ mt: 'auto', pt: 0.75, display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer', color: 'text.secondary' }}
               onClick={() => onToggleHolidayWorking(!editable)}
             >
-              <Switch
-                checked={editable}
-                size="small"
-                onChange={(e) => onToggleHolidayWorking(e.target.checked)}
-                onClick={(e) => e.stopPropagation()}
-                sx={{ m: 0, transform: 'scale(0.7)', transformOrigin: 'left center' }}
-              />
+              <span className="-mr-2 inline-flex origin-left scale-[0.7]" onClick={(e) => e.stopPropagation()}>
+                <Switch
+                  checked={editable}
+                  aria-label="Working day"
+                  onChange={(next) => onToggleHolidayWorking(next)}
+                />
+              </span>
               <Typography sx={{ fontSize: '0.625rem', fontWeight: 500 }}>Working day</Typography>
             </Box>
           )}
         </Box>
       </Box>
-    </Tooltip>
   )
+
+  return holidayLabel ? <Tooltip content={holidayLabel}>{cell}</Tooltip> : cell
 }

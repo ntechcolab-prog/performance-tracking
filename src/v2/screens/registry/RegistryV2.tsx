@@ -2,19 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import InputAdornment from '@mui/material/InputAdornment'
-import Checkbox from '@mui/material/Checkbox'
-import Table from '@mui/material/Table'
-import TableHead from '@mui/material/TableHead'
-import TableBody from '@mui/material/TableBody'
-import TableRow from '@mui/material/TableRow'
-import TableCell from '@mui/material/TableCell'
-import Pagination from '@mui/material/Pagination'
-import SearchIcon from '@mui/icons-material/Search'
+import { Search } from 'lucide-react'
+import { Card } from '@/src/ds/components/Card'
+import { Button } from '@/src/ds/components/Button'
+import { Textfield } from '@/src/ds/components/Textfield'
+import { Checkbox } from '@/src/ds/components/Checkbox'
+import { Badge } from '@/src/ds/components/Badge'
+import { Pagination } from '@/src/ds/components/Pagination'
+import { cn } from '@/src/ds/helpers/cn'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLongOutlined'
 import { REGISTRY_ROWS, type RegistryRow } from '@/src/shared/data/appData'
 import { makeDraft, type BatchForm } from '@/src/shared/data/batchForm'
@@ -26,9 +22,9 @@ import { NEW_BATCH, type AppRoute } from '@/src/v2/routes'
 import type { AppLocation } from '@/src/v2/useAppLocation'
 import BatchEditorV2 from './BatchEditorV2'
 import ExportMenuV2 from './ExportMenuV2'
-import { withAlpha } from './ui'
+import { dsTable, withAlpha } from './ui'
 
-// MUI-native Registry. Same data pipeline / business logic as the Tailwind v0/v1
+// Registry on the Techco.lab DS. Same data pipeline / business logic as the Tailwind v0/v1
 // screen (search filter → selection → export, New Batch draft, edit existing);
 // only the presentation is rebuilt on MUI. Batch editor with its tabs lives in
 // BatchEditorV2.
@@ -192,15 +188,16 @@ export default function RegistryV2({ restricted = false, route, navigate }: Prop
         <Typography variant="h6" sx={{ fontWeight: 700 }}>Registry</Typography>
       </Box>
 
-      <Card sx={{ p: 3 }}>
+      <Card className="overflow-visible p-6">
         <Box sx={{ mb: 2.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: 1.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <TextField
-              size="small"
+            <Textfield
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search for …"
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
+              aria-label="Search batches"
+              leadingIcon={<Search className="size-4" />}
+              className="h-8 w-56"
             />
             {!restricted && (
               <ExportMenuV2
@@ -213,77 +210,71 @@ export default function RegistryV2({ restricted = false, route, navigate }: Prop
                 accent
               />
             )}
-            <Button variant="contained" onClick={newBatch}>New Batch</Button>
+            <Button variant="primary" size="sm" onClick={newBatch}>New Batch</Button>
           </Box>
         </Box>
 
-        <Box id={REGISTRY_PRINT_ID} sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: '56.75rem', '& th, & td': { px: 3, whiteSpace: 'nowrap' } }}>
-            <TableHead>
-              <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 500, bgcolor: 'background.default' } }}>
+        <div id={REGISTRY_PRINT_ID} className={dsTable.wrap}>
+          {/* Plain table in the DS Table look: the DS <Table> has no row click
+              and selects per page, while this list opens a batch on row click and
+              "select all" covers every filtered batch. */}
+          <table className={cn(dsTable.table, 'min-w-[56.75rem]')}>
+            <thead>
+              <tr className={dsTable.headRow}>
                 {!restricted && (
-                  <TableCell padding="checkbox">
+                  <th scope="col" className={cn(dsTable.th, 'w-px')}>
                     <Checkbox
-                      size="small"
                       checked={allFilteredSelected}
                       indeterminate={!allFilteredSelected && someFilteredSelected}
                       onChange={toggleAll}
-                      slotProps={{ input: { 'aria-label': allFilteredSelected ? 'Clear selection' : 'Select all' } }}
+                      aria-label={allFilteredSelected ? 'Clear selection' : 'Select all'}
                     />
-                  </TableCell>
+                  </th>
                 )}
-                {COLUMNS.map((c) => <TableCell key={c}>{c}</TableCell>)}
-              </TableRow>
-            </TableHead>
-            <TableBody>
+                {COLUMNS.map((c) => <th key={c} scope="col" className={cn(dsTable.th, 'px-6')}>{c}</th>)}
+              </tr>
+            </thead>
+            <tbody>
               {visible.map((r) => {
                 const isSel = selected.has(r.id)
                 return (
-                  <TableRow
+                  <tr
                     key={r.id}
-                    hover
                     onClick={() => editExisting(r)}
-                    selected={isSel}
-                    sx={{ cursor: 'pointer' }}
+                    aria-selected={isSel}
+                    className={cn(dsTable.row, 'cursor-pointer whitespace-nowrap', isSel && 'bg-accent-subtle odd:bg-accent-subtle even:bg-accent-subtle hover:bg-accent-subtle')}
                   >
                     {!restricted && (
-                      <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox size="small" checked={isSel} onChange={() => toggleRow(r.id)} slotProps={{ input: { 'aria-label': `Select ${r.id}` } }} />
-                      </TableCell>
+                      <td className={cn(dsTable.td, 'w-px')} onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={isSel} onChange={() => toggleRow(r.id)} aria-label={`Select ${r.id}`} />
+                      </td>
                     )}
-                    <TableCell sx={{ fontWeight: 500, color: 'text.primary' }}>{r.id}</TableCell>
-                    <TableCell sx={{ color: 'text.primary' }}>{r.product}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{r.start}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{r.end}</TableCell>
-                    <TableCell sx={{ color: 'text.primary' }}>{r.line}</TableCell>
-                    <TableCell><StatusBadge status={r.status} /></TableCell>
-                  </TableRow>
+                    <td className={cn(dsTable.td, 'px-6 font-medium')}>{r.id}</td>
+                    <td className={cn(dsTable.td, 'px-6')}>{r.product}</td>
+                    <td className={cn(dsTable.td, 'px-6 text-text-muted')}>{r.start}</td>
+                    <td className={cn(dsTable.td, 'px-6 text-text-muted')}>{r.end}</td>
+                    <td className={cn(dsTable.td, 'px-6')}>{r.line}</td>
+                    <td className={cn(dsTable.td, 'px-6')}><StatusBadge status={r.status} /></td>
+                  </tr>
                 )
               })}
               {filtered.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={restricted ? COLUMNS.length : COLUMNS.length + 1} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                <tr>
+                  <td colSpan={restricted ? COLUMNS.length : COLUMNS.length + 1} className="px-6 py-10 text-center text-text-muted">
                     No batches match “{query}”.
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               )}
-            </TableBody>
-          </Table>
-        </Box>
+            </tbody>
+          </table>
+        </div>
 
         {filtered.length > PAGE_SIZE && (
           <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, '@media print': { display: 'none' } }}>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               Showing {current * PAGE_SIZE + 1}–{current * PAGE_SIZE + visible.length} of {filtered.length} batches
             </Typography>
-            <Pagination
-              count={pageCount}
-              page={current + 1}
-              onChange={(_, p) => setPage(p - 1)}
-              color="primary"
-              shape="rounded"
-              size="small"
-            />
+            <Pagination page={current + 1} pageCount={pageCount} onPageChange={(p) => setPage(p - 1)} />
           </Box>
         )}
       </Card>
@@ -299,11 +290,6 @@ function useOncePerKey<K, T>(key: K, make: () => T): T {
 }
 
 function StatusBadge({ status }: { status: RegistryRow['status'] }) {
-  const color = status === 'Completed' ? 'success.main' : status === 'Cancelled' ? 'error.main' : 'warning.main'
-  return (
-    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color, fontSize: '0.875rem' }}>
-      <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: color }} />
-      {status}
-    </Box>
-  )
+  const variant = status === 'Completed' ? 'success' : status === 'Cancelled' ? 'danger' : 'warning'
+  return <Badge dot size="sm" variant={variant}>{status}</Badge>
 }

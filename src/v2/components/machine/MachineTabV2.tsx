@@ -2,16 +2,13 @@
 
 import { useMemo, useState } from 'react'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
 import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
-import Select from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import Divider from '@mui/material/Divider'
+import { Card } from '@/src/ds/components/Card'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Select } from '@/src/ds/components/Select'
+import { SegmentedControl } from '@/src/ds/components/SegmentedControl'
+import { Divider } from '@/src/ds/components/Divider'
+import { cn } from '@/src/ds/helpers/cn'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import type { EChartsOption } from 'echarts'
@@ -55,10 +52,10 @@ const WEEKDAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'F
 // --- shared small building blocks ---
 
 function CardShell({
-  title, toolbar, children, sx,
-}: { title: string; toolbar?: React.ReactNode; children: React.ReactNode; sx?: object }) {
+  title, toolbar, children, className,
+}: { title: string; toolbar?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <Card sx={{ display: 'flex', flexDirection: 'column', p: 2, height: '100%', ...sx }}>
+    <Card className={cn('flex h-full flex-col p-4', className)}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
         <Typography variant="overline" sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.2 }}>{title}</Typography>
         {toolbar}
@@ -73,9 +70,9 @@ function MonthStepper({
 }: { label: string; onPrev: () => void; onNext: () => void; disableNext?: boolean; minWidth?: number | string }) {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-      <IconButton size="small" onClick={onPrev} aria-label="Previous month"><ChevronLeftIcon fontSize="small" /></IconButton>
+      <IconButton variant="ghost" size="sm" onClick={onPrev} aria-label="Previous month" icon={<ChevronLeftIcon fontSize="small" />} className="text-text-muted" />
       <Typography variant="body2" sx={{ minWidth, textAlign: 'center', fontWeight: 500, color: 'text.primary' }}>{label}</Typography>
-      <IconButton size="small" onClick={onNext} disabled={disableNext} aria-label="Next month"><ChevronRightIcon fontSize="small" /></IconButton>
+      <IconButton variant="ghost" size="sm" onClick={onNext} disabled={disableNext} aria-label="Next month" icon={<ChevronRightIcon fontSize="small" />} className="text-text-muted" />
     </Box>
   )
 }
@@ -129,13 +126,13 @@ const CHART_TYPES: { value: ChartType; label: string }[] = [
 
 function ChartTypeToggle({ value, onChange }: { value: ChartType; onChange: (t: ChartType) => void }) {
   return (
-    <ToggleButtonGroup
-      exclusive size="small" value={value}
-      onChange={(_, v) => v && onChange(v)}
-      sx={{ '& .MuiToggleButton-root': { px: 1, py: 0.25, fontSize: '0.6875rem' } }}
-    >
-      {CHART_TYPES.map((t) => <ToggleButton key={t.value} value={t.value}>{t.label}</ToggleButton>)}
-    </ToggleButtonGroup>
+    <SegmentedControl
+      size="sm"
+      aria-label="Chart type"
+      options={CHART_TYPES}
+      value={value}
+      onChange={(v) => onChange(v as ChartType)}
+    />
   )
 }
 
@@ -250,7 +247,7 @@ function AvailabilityRankingBoard({ goal }: { goal: number }) {
   }
 
   return (
-    <Card sx={{ p: 2.5 }}>
+    <Card className="p-5">
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
         <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'text.primary' }}>
@@ -339,7 +336,7 @@ function MachineRankingCard({ goal, selectedMachine }: { goal: number; selectedM
       </Box>
       {best && (
         <>
-          <Divider sx={{ mt: 1.5, mb: 1 }} />
+          <Divider className="mb-2 mt-3" />
           <Typography variant="caption" align="center" sx={{ display: 'block', color: 'text.secondary' }}>
             Best: <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>{best.machine}</Box> ({best.pct}%)
           </Typography>
@@ -437,18 +434,20 @@ export default function MachineTabV2() {
 
       {/* line + machine scope. ExportMenu (XLSX/print) staged for follow-up. */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Production Line</InputLabel>
-          <Select label="Production Line" value={line} onChange={(e) => setLine(e.target.value)}>
-            {PRODUCTION_LINES.map((l) => <MenuItem key={l} value={l}>{l}</MenuItem>)}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 170 }}>
-          <InputLabel>Machine</InputLabel>
-          <Select label="Machine" value={machine} onChange={(e) => setMachine(e.target.value)}>
-            {MACHINES.map((m) => <MenuItem key={m} value={m}>{m}</MenuItem>)}
-          </Select>
-        </FormControl>
+        <Select
+          label="Production Line"
+          className="min-w-[200px]"
+          value={line}
+          onChange={setLine}
+          options={PRODUCTION_LINES.map((l) => ({ label: l, value: l }))}
+        />
+        <Select
+          label="Machine"
+          className="min-w-[170px]"
+          value={machine}
+          onChange={setMachine}
+          options={MACHINES.map((m) => ({ label: m, value: m }))}
+        />
       </Box>
 
       <Typography variant="overline" sx={{ fontWeight: 600, color: 'text.primary' }}>Availability</Typography>
@@ -486,7 +485,7 @@ export default function MachineTabV2() {
         {/* Month — spans 2 columns */}
         <CardShell
           title="Month"
-          sx={{ gridColumn: { lg: 'span 2' } }}
+          className="lg:col-span-2"
           toolbar={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <ChartTypeToggle value={monthType} onChange={(t) => setCard('month', t)} />
@@ -513,16 +512,18 @@ export default function MachineTabV2() {
         {/* Year — spans all 3 columns */}
         <CardShell
           title="Year"
-          sx={{ gridColumn: { lg: 'span 3' } }}
+          className="lg:col-span-3"
           toolbar={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <ChartTypeToggle value={yearType} onChange={(t) => setCard('year', t)} />
-              <FormControl size="small" sx={{ minWidth: 100 }}>
-                <InputLabel>Year</InputLabel>
-                <Select label="Year" value={String(viewYear)} onChange={(e) => setViewYear(Number(e.target.value))}>
-                  {yearOptions.map((y) => <MenuItem key={y} value={String(y)}>{y}</MenuItem>)}
-                </Select>
-              </FormControl>
+              {/* No visible label: the DS Select puts its label above the
+                  trigger, which would break the card header row. */}
+              <Select
+                className="min-w-[100px]"
+                value={String(viewYear)}
+                onChange={(v) => setViewYear(Number(v))}
+                options={yearOptions.map((y) => ({ label: String(y), value: String(y) }))}
+              />
             </Box>
           }
         >

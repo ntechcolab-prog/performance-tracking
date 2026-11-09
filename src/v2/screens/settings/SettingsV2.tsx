@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
-import Tabs from '@mui/material/Tabs'
-import Tab from '@mui/material/Tab'
+import { Card } from '@/src/ds/components/Card'
+import { Tabs, TabList, Tab } from '@/src/ds/components/Tabs'
 import Typography from '@mui/material/Typography'
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import { SETTINGS_TABS } from '@/src/shared/data/appData'
@@ -12,7 +11,7 @@ import { GeneralSettingsV2, DataExportSettingsV2 } from './MiscSettingsV2'
 import AvailabilitySettingsV2 from './AvailabilitySettingsV2'
 import ProductionSettingsV2 from './ProductionSettingsV2'
 
-// MUI-native Settings screen. Mirrors the Tailwind SettingsScreen (tabbed:
+// v2 Settings screen (Techco.lab DS widgets). Mirrors the Tailwind SettingsScreen (tabbed:
 // General / Availability / Data Export) and reuses every bit of business logic —
 // the availability hooks/services and the same localStorage keys — so v0/v1 and
 // v2 read and write the same settings.
@@ -28,11 +27,15 @@ export default function SettingsV2() {
       </Box>
 
       {/* Tabs */}
-      <Card sx={{ px: 1, py: 0.5 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto">
-          {SETTINGS_TABS.map((t) => (
-            <Tab key={t} value={t} label={t} />
-          ))}
+      <Card className="px-2 pb-1 pt-1">
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabList aria-label="Settings sections" className="overflow-x-auto overflow-y-hidden border-b-0 pb-1">
+            {SETTINGS_TABS.map((t) => (
+              <Tab key={t} value={t} className="whitespace-nowrap py-3">
+                {t}
+              </Tab>
+            ))}
+          </TabList>
         </Tabs>
       </Card>
 
@@ -45,7 +48,7 @@ export default function SettingsV2() {
       ) : tab === 'Data Export' ? (
         <DataExportSettingsV2 />
       ) : (
-        <Card sx={{ display: 'grid', placeItems: 'center', p: 10, textAlign: 'center' }}>
+        <Card className="grid place-items-center p-20 text-center">
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>{tab}</Typography>
             <Typography variant="body2" sx={{ mt: 0.5, color: 'text.secondary' }}>

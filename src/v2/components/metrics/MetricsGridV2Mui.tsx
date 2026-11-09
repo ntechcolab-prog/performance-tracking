@@ -1,15 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
-import IconButton from '@mui/material/IconButton'
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
-import Popover from '@mui/material/Popover'
-import Tooltip from '@mui/material/Tooltip'
+import { Card } from '@/src/ds/components/Card'
+import { Button } from '@/src/ds/components/Button'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Menu } from '@/src/ds/components/Menu'
+import { Popover } from '@/src/ds/components/Popover'
+import { Tooltip } from '@/src/ds/components/Tooltip'
+import { cn } from '@/src/ds/helpers/cn'
 import RemoveIcon from '@mui/icons-material/Remove'
 import AddIcon from '@mui/icons-material/Add'
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
@@ -67,7 +67,7 @@ export default function MetricsGridV2Mui({ kpis, series, onDetails }: MetricsGri
   const [order, setOrder] = useState<string[]>(() => kpis.map((k) => k.key))
   const [dragKey, setDragKey] = useState<string | null>(null)
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
-  const [confirmAnchor, setConfirmAnchor] = useState<HTMLElement | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [styleMap, setStyleMap] = useLocalStorage<MetricStyleMap>(METRIC_STYLE_KEY, {})
 
   const setStyle = (key: string, style: ChartType | '') =>
@@ -80,7 +80,7 @@ export default function MetricsGridV2Mui({ kpis, series, onDetails }: MetricsGri
 
   const done = () => {
     setEditing(false)
-    setConfirmAnchor(null)
+    setConfirmOpen(false)
     setSnapshot(null)
   }
 
@@ -90,9 +90,9 @@ export default function MetricsGridV2Mui({ kpis, series, onDetails }: MetricsGri
       snapshot.hidden.size !== hidden.size ||
       [...hidden].some((k) => !snapshot.hidden.has(k)))
 
-  const cancel = (e: React.MouseEvent<HTMLElement>) => {
+  const cancel = () => {
     if (dirty) {
-      setConfirmAnchor(e.currentTarget)
+      setConfirmOpen(true)
       return
     }
     done()
@@ -151,38 +151,40 @@ export default function MetricsGridV2Mui({ kpis, series, onDetails }: MetricsGri
         </Typography>
         {editing ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button size="small" color="inherit" onClick={cancel} sx={{ color: 'text.secondary' }}>
-              Cancel
-            </Button>
-            <Button size="small" variant="contained" onClick={done}>
-              Done
-            </Button>
+            {/* Opening is driven by `cancel` (only when dirty); the popover itself
+                may only close. */}
             <Popover
-              open={!!confirmAnchor}
-              anchorEl={confirmAnchor}
-              onClose={() => setConfirmAnchor(null)}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-              slotProps={{ paper: { sx: { width: 256, p: 2 } } }}
+              open={confirmOpen}
+              onOpenChange={(o) => { if (!o) setConfirmOpen(false) }}
+              side="bottom"
+              align="end"
+              aria-label="Discard changes?"
+              className="w-64 p-4"
+              trigger={
+                <Button size="sm" variant="ghost" onClick={cancel} className="text-text-muted">
+                  Cancel
+                </Button>
+              }
             >
-              <Typography variant="subtitle2" sx={{ color: 'text.primary', fontWeight: 600 }}>
-                Discard changes?
-              </Typography>
-              <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: 'text.secondary' }}>
+              <p className="text-sm font-semibold text-text">Discard changes?</p>
+              <p className="mt-1 text-xs text-text-muted">
                 Your layout changes (removed, added or reordered metrics) won&apos;t be saved.
-              </Typography>
-              <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                <Button size="small" color="inherit" onClick={() => setConfirmAnchor(null)} sx={{ color: 'text.secondary' }}>
+              </p>
+              <div className="mt-3 flex justify-end gap-2">
+                <Button size="sm" variant="ghost" onClick={() => setConfirmOpen(false)} className="text-text-muted">
                   Keep editing
                 </Button>
-                <Button size="small" variant="contained" color="error" onClick={discard}>
+                <Button size="sm" variant="danger" onClick={discard}>
                   Discard
                 </Button>
-              </Box>
+              </div>
             </Popover>
+            <Button size="sm" variant="primary" onClick={done}>
+              Done
+            </Button>
           </Box>
         ) : (
-          <Button size="small" onClick={enterEdit}>
+          <Button size="sm" variant="ghost" onClick={enterEdit} className="text-accent">
             Edit
           </Button>
         )}
@@ -294,25 +296,16 @@ function EditableKpiCard({
     >
       {editing && (
         <IconButton
-          size="small"
+          variant="danger"
+          size="sm"
           onClick={onRemove}
           aria-label={`Remove ${kpi.label}`}
-          sx={{
-            position: 'absolute', left: -10, top: -10, zIndex: 10, width: 24, height: 24,
-            bgcolor: 'error.main', color: '#fff', boxShadow: 2,
-            '&:hover': { bgcolor: 'error.main', transform: 'scale(1.1)' },
-          }}
-        >
-          <RemoveIcon sx={{ fontSize: 16 }} />
-        </IconButton>
+          icon={<RemoveIcon sx={{ fontSize: 16 }} />}
+          className="absolute -left-2.5 -top-2.5 z-10 size-6 rounded-round shadow-md transition-transform hover:scale-110"
+        />
       )}
 
-      <Card
-        sx={{
-          p: 2, display: 'flex', flexDirection: 'column', height: '100%',
-          borderColor: dragging ? 'primary.main' : undefined,
-        }}
-      >
+      <Card className={cn('flex h-full flex-col p-4', dragging && 'border-accent')}>
         {/* row 1 — icon + title, delta on the right */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
@@ -356,22 +349,21 @@ function EditableKpiCard({
             {STYLE_OPTIONS.map(({ key, Icon, label }) => {
               const active = (style || '') === key
               return (
-                <Tooltip key={label} title={label}>
+                <Tooltip key={label} content={label}>
                   <IconButton
-                    size="small"
+                    variant="ghost"
+                    size="sm"
                     aria-label={label}
                     aria-pressed={active}
                     onClick={(e) => { e.stopPropagation(); onStyle(key) }}
-                    sx={{
-                      flex: 1, borderRadius: 1, height: 28,
-                      color: active ? 'primary.main' : 'text.secondary',
-                      bgcolor: active ? 'background.paper' : 'transparent',
-                      boxShadow: active ? 1 : 0,
-                      '&:hover': { bgcolor: active ? 'background.paper' : 'action.hover', color: active ? 'primary.main' : 'text.primary' },
-                    }}
-                  >
-                    <Icon sx={{ fontSize: 16 }} />
-                  </IconButton>
+                    icon={<Icon sx={{ fontSize: 16 }} />}
+                    className={cn(
+                      'h-7 w-auto flex-1 rounded-sm',
+                      active
+                        ? 'bg-surface-raised text-accent shadow-sm hover:bg-surface-raised'
+                        : 'text-text-muted hover:text-text',
+                    )}
+                  />
                 </Tooltip>
               )
             })}
@@ -384,7 +376,7 @@ function EditableKpiCard({
             {VIZ_CAPTION[kpi.key] ?? 'vs last month'}
           </Typography>
           {!editing && (
-            <Button size="small" onClick={onDetails} sx={{ minWidth: 0, p: 0.5 }}>Details</Button>
+            <Button size="sm" variant="ghost" onClick={onDetails} className="h-7 px-1.5 text-accent">Details</Button>
           )}
         </Box>
       </Card>
@@ -393,48 +385,30 @@ function EditableKpiCard({
 }
 
 function AddCard({ hidden, onAdd }: { hidden: Kpi[]; onAdd: (key: string) => void }) {
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null)
-  const ref = useRef<HTMLButtonElement>(null)
+  // DS Menu closes after every pick (MUI version stayed open until the last
+  // hidden metric was added) and has no disabled item, so the empty state is a
+  // no-op entry.
+  const items = hidden.length === 0
+    ? [{ label: 'All metrics are shown.' }]
+    : hidden.map((k) => ({ label: k.label, onSelect: () => onAdd(k.key) }))
 
   return (
-    <>
-      <Box
-        component="button"
-        ref={ref}
-        onClick={() => setAnchor(ref.current)}
-        sx={{
-          width: '100%', minHeight: '6.5rem', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 0.5, cursor: 'pointer',
-          borderRadius: 2, border: '2px dashed', borderColor: 'text.disabled', bgcolor: 'transparent',
-          color: 'text.secondary', transition: 'color 0.15s, border-color 0.15s',
-          '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
-        }}
-      >
-        <AddIcon />
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>Add</Typography>
-      </Box>
-      <Menu
-        anchorEl={anchor}
-        open={!!anchor}
-        onClose={() => setAnchor(null)}
-        slotProps={{ paper: { sx: { maxHeight: 240, minWidth: 180 } } }}
-      >
-        {hidden.length === 0 ? (
-          <MenuItem disabled>All metrics are shown.</MenuItem>
-        ) : (
-          hidden.map((k) => (
-            <MenuItem
-              key={k.key}
-              onClick={() => {
-                onAdd(k.key)
-                if (hidden.length === 1) setAnchor(null)
-              }}
-            >
-              {k.label}
-            </MenuItem>
-          ))
-        )}
-      </Menu>
-    </>
+    <Menu
+      items={items}
+      className="max-h-60 min-w-[180px] overflow-y-auto"
+      trigger={
+        <button
+          type="button"
+          className={cn(
+            'flex min-h-[6.5rem] w-full cursor-pointer flex-col items-center justify-center gap-1',
+            'rounded-card border-2 border-dashed border-border-strong bg-transparent text-text-muted',
+            'transition-colors hover:border-accent hover:text-accent',
+          )}
+        >
+          <AddIcon />
+          <span className="text-sm font-medium">Add</span>
+        </button>
+      }
+    />
   )
 }

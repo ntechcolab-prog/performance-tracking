@@ -3,16 +3,15 @@
 import { useEffect, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
-import LinearProgress from '@mui/material/LinearProgress'
-import Dialog from '@mui/material/Dialog'
-import Divider from '@mui/material/Divider'
+import { Badge } from '@/src/ds/components/Badge'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Progress } from '@/src/ds/components/Progress'
+import { Modal } from '@/src/ds/components/Modal'
+import { Divider } from '@/src/ds/components/Divider'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined'
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutlined'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import CloseIcon from '@mui/icons-material/Close'
 import { iris } from '@/src/shared/client/mui/theme'
 import { withAlpha } from '@/src/shared/viz/metricViz'
 import type { LiveBatch } from '@/src/shared/data/mockData'
@@ -28,32 +27,18 @@ interface InOperationV2Props {
 function StatePill({ state }: { state: LiveBatch['state'] }) {
   const running = state === 'Running'
   return (
-    <Chip
-      size="small"
-      icon={running ? <CheckCircleOutlineIcon /> : <PauseCircleOutlineIcon />}
-      label={state}
-      sx={{
-        height: 22,
-        fontSize: '0.6875rem',
-        fontWeight: 500,
-        color: running ? iris.primary700 : 'text.secondary',
-        bgcolor: running ? iris.primarySoft : 'background.default',
-        '& .MuiChip-icon': { fontSize: 14, color: 'inherit' },
-      }}
-    />
+    <Badge variant={running ? 'accent' : 'neutral'} size="sm" className="shrink-0">
+      {running
+        ? <CheckCircleOutlineIcon sx={{ fontSize: 14 }} />
+        : <PauseCircleOutlineIcon sx={{ fontSize: 14 }} />}
+      {state}
+    </Badge>
   )
 }
 
 function ProgressBar({ value }: { value: number }) {
   return (
-    <LinearProgress
-      variant="determinate"
-      value={value}
-      sx={{
-        height: 6, borderRadius: 3, bgcolor: 'background.default',
-        '& .MuiLinearProgress-bar': { borderRadius: 3, backgroundColor: iris.irisBlue },
-      }}
-    />
+    <Progress value={value} />
   )
 }
 
@@ -109,7 +94,7 @@ function BatchCard({ batch, onOpen }: { batch: LiveBatch; onOpen: () => void }) 
         <ProgressBar value={batch.progress} />
       </Box>
 
-      <Divider sx={{ mt: 1.5 }} />
+      <Divider className="mt-3" />
       <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
         <Field label="Machine" value={batch.machine} />
         <Field label="Energy" value={`${batch.energy} kWh`} />
@@ -140,21 +125,17 @@ function BatchModal({ batch, onClose }: { batch: LiveBatch; onClose: () => void 
   const massPct = batch.targetMass ? Math.round((batch.currentMass / batch.targetMass) * 100) : 0
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth aria-label={`Batch ${batch.id} details`}>
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>BATCH {batch.id}</Typography>
-            <StatePill state={batch.state} />
-          </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+    // DS Modal takes a string title and renders its own close button, so the
+    // state pill + recipe line open the body.
+    <Modal open onClose={onClose} title={`BATCH ${batch.id}`} className="max-w-[600px]">
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: -0.5 }}>
+          <StatePill state={batch.state} />
+          <Typography variant="body2" color="text.secondary">
             {batch.recipe} · {batch.machine} · {batch.productionLine}
           </Typography>
         </Box>
-        <IconButton onClick={onClose} aria-label="Close" size="small"><CloseIcon /></IconButton>
-      </Box>
 
-      <Box sx={{ px: 3, py: 2.5, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
             <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>{batch.phase}</Typography>
@@ -198,7 +179,7 @@ function BatchModal({ batch, onClose }: { batch: LiveBatch; onClose: () => void 
           </Box>
         </Box>
       </Box>
-    </Dialog>
+    </Modal>
   )
 }
 
@@ -237,22 +218,14 @@ export default function InOperationV2({ batches }: InOperationV2Props) {
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="overline" sx={{ fontWeight: 600, color: 'text.primary' }}>In Operation</Typography>
-          <Chip
-            size="small"
-            label={batches.length}
-            sx={{ height: 20, fontSize: '0.6875rem', fontWeight: 600, color: iris.primary700, bgcolor: iris.primarySoft }}
-          />
+          <Badge variant="accent" size="sm" className="font-semibold">{batches.length}</Badge>
         </Box>
         {overflowing && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton size="small" onClick={() => scrollByPage(-1)} disabled={!canPrev} aria-label="Previous batches"
-              sx={{ border: '1px solid', borderColor: 'divider' }}>
-              <ChevronLeftIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" onClick={() => scrollByPage(1)} disabled={!canNext} aria-label="Next batches"
-              sx={{ border: '1px solid', borderColor: 'divider' }}>
-              <ChevronRightIcon fontSize="small" />
-            </IconButton>
+            <IconButton variant="secondary" size="sm" onClick={() => scrollByPage(-1)} disabled={!canPrev}
+              aria-label="Previous batches" icon={<ChevronLeftIcon fontSize="small" />} />
+            <IconButton variant="secondary" size="sm" onClick={() => scrollByPage(1)} disabled={!canNext}
+              aria-label="Next batches" icon={<ChevronRightIcon fontSize="small" />} />
           </Box>
         )}
       </Box>

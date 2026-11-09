@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
-import Tabs from '@mui/material/Tabs'
-import Tab from '@mui/material/Tab'
-import Badge from '@mui/material/Badge'
 import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { ArrowLeft } from 'lucide-react'
+import { Tabs, TabList, Tab } from '@/src/ds/components/Tabs'
+import { Badge } from '@/src/ds/components/Badge'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Tooltip } from '@/src/ds/components/Tooltip'
 import type { BatchForm } from '@/src/shared/data/batchForm'
 import { useLocalStorage } from '@/src/shared/lib/useLocalStorage'
 import type { Sheet } from '@/src/shared/lib/exportData'
@@ -178,10 +177,14 @@ export default function BatchEditorV2({ initial, tab, onTabChange, onBack, onSav
       {/* header */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Tooltip title="Back to Registry">
-            <IconButton onClick={() => ask(onBack)} aria-label="Back to Registry" sx={{ border: '1px solid', borderColor: 'divider', color: 'primary.main', borderRadius: 1.5 }}>
-              <ArrowBackIcon />
-            </IconButton>
+          <Tooltip content="Back to Registry">
+            <IconButton
+              variant="secondary"
+              onClick={() => ask(onBack)}
+              aria-label="Back to Registry"
+              className="text-accent"
+              icon={<ArrowLeft className="size-5" />}
+            />
           </Tooltip>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>{form.id}</Typography>
         </Box>
@@ -195,21 +198,19 @@ export default function BatchEditorV2({ initial, tab, onTabChange, onBack, onSav
       {/* step tabs */}
       <Tabs
         value={step}
-        onChange={(_, v: Step) => { if (!disabledSteps.includes(v) && v !== step) ask(() => onTabChange(v)) }}
-        variant="scrollable"
-        scrollButtons="auto"
+        onValueChange={(v) => { const t = v as Step; if (!disabledSteps.includes(t) && t !== step) ask(() => onTabChange(t)) }}
       >
-        {visibleSteps.map((s) => {
-          const disabled = disabledSteps.includes(s)
-          return (
-            <Tab
-              key={s}
-              value={s}
-              disabled={disabled}
-              label={disabled ? <Badge color="default" badgeContent="soon" sx={{ '& .MuiBadge-badge': { fontSize: '0.5rem' } }}>{s}</Badge> : s}
-            />
-          )
-        })}
+        <TabList aria-label="Batch sections" className="flex-wrap">
+          {visibleSteps.map((s) => {
+            const disabled = disabledSteps.includes(s)
+            return (
+              <Tab key={s} value={s} disabled={disabled} className="shrink-0 whitespace-nowrap">
+                {s}
+                {disabled && <Badge size="sm" className="ml-1.5">soon</Badge>}
+              </Tab>
+            )
+          })}
+        </TabList>
       </Tabs>
 
       <CardEditProvider value={cardEdit}>

@@ -3,13 +3,11 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
-import IconButton from '@mui/material/IconButton'
-import TextField from '@mui/material/TextField'
-import InputAdornment from '@mui/material/InputAdornment'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import Chip from '@mui/material/Chip'
+import { Button } from '@/src/ds/components/Button'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Textfield } from '@/src/ds/components/Textfield'
+import { SegmentedControl } from '@/src/ds/components/SegmentedControl'
+import { Badge } from '@/src/ds/components/Badge'
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import AddIcon from '@mui/icons-material/Add'
@@ -33,7 +31,6 @@ import {
 } from '@/src/shared/lib/availability'
 import { useHolidays } from '@/src/shared/lib/holidays'
 import { parseAssistant, type ParsedRule } from '@/src/shared/lib/assistantParser'
-import { iris } from '@/src/shared/client/mui/theme'
 import { FormSectionV2, FieldV2 } from './settingsUi'
 import PlanningCalendarV2 from './PlanningCalendarV2'
 
@@ -168,19 +165,16 @@ export default function AvailabilitySettingsV2() {
       <FormSectionV2 title="Availability target">
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2.5 }}>
           <FieldV2 label="Monthly availability target">
-            <TextField
-              fullWidth
-              size="small"
+            <Textfield
               type="number"
+              min={0}
+              max={100}
               value={settings.monthlyGoalPct}
               onChange={(e) => {
                 const n = e.target.value === '' ? 0 : Number(e.target.value)
                 setSettings((p) => ({ ...p, monthlyGoalPct: Math.max(0, Math.min(100, n)) }))
               }}
-              slotProps={{
-                htmlInput: { min: 0, max: 100 },
-                input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
-              }}
+              trailingIcon={<span className="text-sm text-text-muted">%</span>}
             />
           </FieldV2>
         </Box>
@@ -192,16 +186,17 @@ export default function AvailabilitySettingsV2() {
 
       {/* Working schedule */}
       <FormSectionV2 title="Working schedule">
-        <ToggleButtonGroup
-          exclusive
-          size="small"
+        <SegmentedControl
+          size="sm"
+          aria-label="Schedule mode"
           value={scheduleMode}
-          onChange={(_, v) => v && setScheduleMode(v)}
-          sx={{ mb: 2.5 }}
-        >
-          <ToggleButton value="manual">Manual configuration</ToggleButton>
-          <ToggleButton value="assistant">Planning assistant</ToggleButton>
-        </ToggleButtonGroup>
+          onChange={(v) => v && setScheduleMode(v as 'manual' | 'assistant')}
+          options={[
+            { value: 'manual', label: 'Manual configuration' },
+            { value: 'assistant', label: 'Planning assistant' },
+          ]}
+          className="mb-5"
+        />
 
         {scheduleMode === 'manual' ? (
           <>
@@ -214,36 +209,34 @@ export default function AvailabilitySettingsV2() {
                 return (
                   <Box key={d} sx={{ width: '4.75rem', display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                     <Button
-                      variant={on ? 'contained' : 'outlined'}
-                      color={on ? 'primary' : 'inherit'}
+                      variant={on ? 'primary' : 'secondary'}
                       onClick={() => toggleWorkingDay(d)}
-                      sx={{
-                        px: 1, py: 1, minWidth: 0,
-                        ...(on ? {} : { color: 'text.secondary', borderColor: 'divider' }),
-                      }}
+                      aria-pressed={on}
+                      className={on ? 'px-2' : 'px-2 border-border text-text-muted'}
                     >
                       {WEEKDAY_LABELS[d]}
                     </Button>
                     {on && (
-                      <TextField
-                        size="small"
+                      <Textfield
                         type="number"
+                        min={0}
+                        step={0.5}
+                        aria-label={`${WEEKDAY_LONG[d]} hours`}
                         value={settings.defaultHoursByWeekday[d] ?? 0}
                         onChange={(e) => setDefaultHours(d, e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))}
-                        slotProps={{
-                          htmlInput: { min: 0, step: 0.5, style: { textAlign: 'center', fontWeight: 600 } },
-                          input: { endAdornment: <InputAdornment position="end">h</InputAdornment> },
-                        }}
+                        trailingIcon={<span className="text-xs text-text-muted">h</span>}
+                        className="pl-2 pr-6 text-center font-semibold"
                       />
                     )}
                   </Box>
                 )
               })}
               <Button
-                variant="contained"
+                variant="primary"
                 onClick={() => setShowApplyPeriod((v) => !v)}
-                startIcon={<KeyboardArrowDownIcon sx={{ transition: 'transform 0.2s', transform: showApplyPeriod ? 'rotate(180deg)' : 'none' }} />}
-                sx={{ ml: 'auto', flexShrink: 0 }}
+                aria-expanded={showApplyPeriod}
+                leadingIcon={<KeyboardArrowDownIcon fontSize="small" sx={{ transition: 'transform 0.2s', transform: showApplyPeriod ? 'rotate(180deg)' : 'none' }} />}
+                className="ml-auto shrink-0"
               >
                 Apply schedule to a period
               </Button>
@@ -253,12 +246,12 @@ export default function AvailabilitySettingsV2() {
               <Box sx={{ mt: 2.5, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 1.5 }}>
                   <FieldV2 label="Start" sx={{ width: '11rem' }}>
-                    <TextField fullWidth size="small" type="date" value={applyStart} onChange={(e) => setApplyStart(e.target.value)} />
+                    <Textfield type="date" value={applyStart} onChange={(e) => setApplyStart(e.target.value)} />
                   </FieldV2>
                   <FieldV2 label="End" sx={{ width: '11rem' }}>
-                    <TextField fullWidth size="small" type="date" value={applyEnd} onChange={(e) => setApplyEnd(e.target.value)} />
+                    <Textfield type="date" value={applyEnd} onChange={(e) => setApplyEnd(e.target.value)} />
                   </FieldV2>
-                  <Button variant="contained" onClick={applyRange} disabled={!applyStart || !applyEnd}>
+                  <Button variant="primary" onClick={applyRange} disabled={!applyStart || !applyEnd}>
                     Apply
                   </Button>
                 </Box>
@@ -278,9 +271,8 @@ export default function AvailabilitySettingsV2() {
               Describe the plan in plain English — applied to {MONTH_NAMES[month]} {year} (the month shown in the calendar below).
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
-              <TextField
-                fullWidth
-                size="small"
+              <div className="min-w-0 flex-1">
+              <Textfield
                 value={assistantText}
                 onChange={(e) => {
                   setAssistantText(e.target.value)
@@ -288,7 +280,8 @@ export default function AvailabilitySettingsV2() {
                 }}
                 placeholder="Mondays, Tuesdays and Wednesdays for 8h, Thursdays and Fridays for 4h until day 20"
               />
-              <Button variant="contained" onClick={parseAssistantNow} disabled={!assistantText.trim()} sx={{ flexShrink: 0 }}>
+              </div>
+              <Button variant="primary" onClick={parseAssistantNow} disabled={!assistantText.trim()} className="shrink-0">
                 Parse
               </Button>
             </Box>
@@ -306,20 +299,17 @@ export default function AvailabilitySettingsV2() {
                       {(Object.entries(preview.hoursByWeekday) as [string, number][])
                         .sort((a, b) => Number(a[0]) - Number(b[0]))
                         .map(([wd, h]) => (
-                          <Chip
-                            key={wd}
-                            size="small"
-                            label={`${WEEKDAY_LONG[Number(wd)]} · ${h}h`}
-                            sx={{ bgcolor: iris.primarySoft, color: 'primary.dark', fontWeight: 500 }}
-                          />
+                          <Badge key={wd} variant="accent" size="sm">
+                            {`${WEEKDAY_LONG[Number(wd)]} · ${h}h`}
+                          </Badge>
                         ))}
                     </Box>
                     <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
                       {preview.untilDay ? `Applies to days 1–${preview.untilDay}.` : 'Applies to the whole month.'}
                     </Typography>
                     <Box sx={{ mt: 1.5, display: 'flex', gap: 1 }}>
-                      <Button variant="contained" size="small" onClick={applyAssistant}>Apply</Button>
-                      <Button variant="outlined" color="inherit" size="small" onClick={() => setPreview(null)} sx={{ color: 'text.secondary', borderColor: 'divider' }}>
+                      <Button variant="primary" size="sm" onClick={applyAssistant}>Apply</Button>
+                      <Button variant="secondary" size="sm" onClick={() => setPreview(null)}>
                         Cancel
                       </Button>
                     </Box>
@@ -362,21 +352,19 @@ export default function AvailabilitySettingsV2() {
         action={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Button
-              variant="outlined"
-              color="inherit"
-              size="small"
+              variant="secondary"
+              size="sm"
               onClick={importHolidays}
               disabled={importing}
-              startIcon={<FileDownloadOutlinedIcon sx={{ fontSize: 14 }} />}
-              sx={{ color: 'text.secondary', borderColor: 'divider' }}
+              leadingIcon={<FileDownloadOutlinedIcon sx={{ fontSize: 16 }} />}
             >
               {importing ? 'Importing…' : 'Import holidays'}
             </Button>
             <Button
-              variant="contained"
-              size="small"
+              variant="primary"
+              size="sm"
               onClick={() => setShowAddHoliday((v) => !v)}
-              startIcon={<AddIcon sx={{ fontSize: 14 }} />}
+              leadingIcon={<AddIcon sx={{ fontSize: 16 }} />}
             >
               Add Holiday
             </Button>
@@ -400,12 +388,12 @@ export default function AvailabilitySettingsV2() {
         {showAddHoliday && (
           <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 1.5, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'rgba(246,246,246,0.6)', p: 1.5 }}>
             <FieldV2 label="Date" sx={{ width: '11rem' }}>
-              <TextField fullWidth size="small" type="date" value={newHolidayDate} onChange={(e) => setNewHolidayDate(e.target.value)} />
+              <Textfield type="date" value={newHolidayDate} onChange={(e) => setNewHolidayDate(e.target.value)} />
             </FieldV2>
             <FieldV2 label="Name" sx={{ flex: 1, minWidth: '12rem' }}>
-              <TextField fullWidth size="small" value={newHolidayName} onChange={(e) => setNewHolidayName(e.target.value)} placeholder="e.g. Company anniversary" />
+              <Textfield value={newHolidayName} onChange={(e) => setNewHolidayName(e.target.value)} placeholder="e.g. Company anniversary" />
             </FieldV2>
-            <Button variant="contained" onClick={addHoliday} disabled={!newHolidayDate}>Add</Button>
+            <Button variant="primary" onClick={addHoliday} disabled={!newHolidayDate}>Add</Button>
           </Box>
         )}
 
@@ -427,9 +415,14 @@ export default function AvailabilitySettingsV2() {
                     <Typography variant="caption" color="text.secondary">{label}</Typography>
                   </Box>
                   {custom && (
-                    <IconButton size="small" aria-label={`Remove ${h.name}`} onClick={() => holidays.remove(h.date)} sx={{ color: 'text.disabled', flexShrink: 0 }}>
-                      <DeleteOutlineIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
+                    <IconButton
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Remove ${h.name}`}
+                      onClick={() => holidays.remove(h.date)}
+                      className="shrink-0 text-text-subtle"
+                      icon={<DeleteOutlineIcon sx={{ fontSize: 16 }} />}
+                    />
                   )}
                 </Box>
               )

@@ -3,17 +3,10 @@
 import type { ReactNode } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
-import Select from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import Checkbox from '@mui/material/Checkbox'
-import ListItemText from '@mui/material/ListItemText'
-import Chip from '@mui/material/Chip'
-import OutlinedInput from '@mui/material/OutlinedInput'
-import Button from '@mui/material/Button'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import { Button } from '@/src/ds/components/Button'
+import { Combobox } from '@/src/ds/components/Combobox'
+import { Select } from '@/src/ds/components/Select'
+import { SegmentedControl } from '@/src/ds/components/SegmentedControl'
 import { MACHINES, RECIPES, MONTHS } from '@/src/shared/data/mockData'
 import { buildWeeks, weekLabel } from '@/src/shared/lib/weeks'
 
@@ -36,44 +29,27 @@ interface FiltersV2Props {
   actions?: ReactNode
 }
 
-// Sentinel value for the "Select all" row — never part of `selected`.
-const ALL = '__all__'
-
 function MultiSelect({
   label, options, selected, onChange,
 }: { label: string; options: readonly string[]; selected: string[]; onChange: (v: string[]) => void }) {
   const allSelected = options.length > 0 && options.every((o) => selected.includes(o))
   return (
-    <FormControl fullWidth size="small">
-      <InputLabel>{label}</InputLabel>
-      <Select
+    <div className="relative">
+      <Combobox
         multiple
+        label={label}
+        placeholder={selected.length ? '' : 'All'}
+        options={options.map((o) => ({ label: o, value: o }))}
         value={selected}
-        onChange={(e) => {
-          const next = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value
-          // "Select all" toggles everything; "Clear all" when every option is already picked.
-          if (next.includes(ALL)) onChange(allSelected ? [] : [...options])
-          else onChange(next)
-        }}
-        input={<OutlinedInput label={label} />}
-        renderValue={(sel) => (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {sel.map((v) => <Chip key={v} label={v} size="small" color="primary" variant="outlined" />)}
-          </Box>
-        )}
-      >
-        <MenuItem value={ALL} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Checkbox checked={allSelected} indeterminate={!allSelected && selected.length > 0} size="small" />
-          <ListItemText primary={allSelected ? 'Clear all' : 'Select all'} secondary={`${selected.length} of ${options.length}`} slotProps={{ secondary: { sx: { fontSize: '0.75rem' } } }} />
-        </MenuItem>
-        {options.map((o) => (
-          <MenuItem key={o} value={o}>
-            <Checkbox checked={selected.includes(o)} size="small" />
-            <ListItemText primary={o} />
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+        onChange={onChange}
+        hint={`${selected.length} of ${options.length} selected`}
+      />
+      {/* "Select all" toggles everything; "Clear all" when every option is already picked. */}
+      <Button variant="ghost" size="sm" className="absolute right-0 top-[-6px] h-7 px-2 text-xs"
+        onClick={() => onChange(allSelected ? [] : [...options])}>
+        {allSelected ? 'Clear all' : 'Select all'}
+      </Button>
+    </div>
   )
 }
 
@@ -98,34 +74,28 @@ export default function FiltersV2({
 
       <Box sx={{ mt: 2.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
-          <ToggleButtonGroup
-            exclusive size="small" value={period}
-            onChange={(_, v) => v && setPeriod(v)}
-          >
-            <ToggleButton value="monthly">Monthly</ToggleButton>
-            <ToggleButton value="weekly">Weekly</ToggleButton>
-          </ToggleButtonGroup>
+          <SegmentedControl
+            size="sm" aria-label="Period" value={period}
+            onChange={(v) => setPeriod(v as Period)}
+            options={[{ label: 'Monthly', value: 'monthly' }, { label: 'Weekly', value: 'weekly' }]}
+          />
 
           {period === 'weekly' ? (
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Week</InputLabel>
-              <Select label="Week" value={String(safeWeek)} onChange={(e) => setWeekIdx(Number(e.target.value))}>
-                {weeks.map((w, i) => (
-                  <MenuItem key={i} value={String(i)}>Week {i + 1} · {weekLabel(year, month, w)}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Select
+              className="min-w-[200px]" value={String(safeWeek)}
+              onChange={(v) => setWeekIdx(Number(v))}
+              options={weeks.map((w, i) => ({ value: String(i), label: `Week ${i + 1} · ${weekLabel(year, month, w)}` }))}
+            />
           ) : (
-            <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel>Month</InputLabel>
-              <Select label="Month" value={monthKey} onChange={(e) => setMonthKey(e.target.value)}>
-                {MONTHS.map((m) => <MenuItem key={m.key} value={m.key}>{m.label}</MenuItem>)}
-              </Select>
-            </FormControl>
+            <Select
+              className="min-w-[180px]" value={monthKey}
+              onChange={(v) => setMonthKey(v)}
+              options={MONTHS.map((m) => ({ value: m.key, label: m.label }))}
+            />
           )}
         </Box>
 
-        <Button variant="outlined" size="small" onClick={onClear}>Clear Filters</Button>
+        <Button variant="secondary" size="sm" onClick={onClear}>Clear Filters</Button>
       </Box>
     </Box>
   )

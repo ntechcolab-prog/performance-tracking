@@ -1,9 +1,8 @@
 'use client'
 
 import Box from '@mui/material/Box'
-import TextField from '@mui/material/TextField'
-import MenuItem from '@mui/material/MenuItem'
-import InputAdornment from '@mui/material/InputAdornment'
+import { Select as DsSelect } from '@/src/ds/components/Select'
+import { Textfield } from '@/src/ds/components/Textfield'
 import type { MachineData } from '@/src/shared/data/batchForm'
 import {
   MACHINE_TYPES, EQUIPMENTS, GRINDING_TECH, LINERS, SEPARATIONS,
@@ -17,17 +16,15 @@ import { EditableCard, useEditing } from '../cardEdit'
 
 function Select({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
   return (
-    <TextField select size="small" fullWidth label={label} value={value} onChange={(e) => onChange(e.target.value)}>
-      {options.map((o) => <MenuItem key={o} value={o}>{o}</MenuItem>)}
-    </TextField>
+    <DsSelect label={label} value={value} options={options.map((o) => ({ label: o, value: o }))} onChange={onChange} />
   )
 }
 
 function Text({ label, value, onChange, suffix }: { label: string; value: string; onChange: (v: string) => void; suffix?: string }) {
   return (
-    <TextField
-      size="small" fullWidth label={label} value={value} onChange={(e) => onChange(e.target.value)}
-      slotProps={suffix ? { input: { endAdornment: <InputAdornment position="end">{suffix}</InputAdornment> } } : undefined}
+    <Textfield
+      label={label} value={value} onChange={(e) => onChange(e.target.value)}
+      trailingIcon={suffix ? <span className="text-sm">{suffix}</span> : undefined}
     />
   )
 }

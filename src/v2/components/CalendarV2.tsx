@@ -2,7 +2,7 @@
 
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import Tooltip from '@mui/material/Tooltip'
+import { Tooltip } from '@/src/ds/components/Tooltip'
 import { iris } from '@/src/shared/client/mui/theme'
 import { withAlpha } from '@/src/shared/viz/metricViz'
 import type { DayRollup } from '@/src/shared/lib/compute'
@@ -68,7 +68,7 @@ export default function CalendarV2({ year, month, dayMap, avgMass, onDetails, av
             </Box>
           )
           return data ? (
-            <Tooltip key={day} title={`${data.count} batches · ${data.mass.toFixed(1)} ton`} arrow>{cell}</Tooltip>
+            <Tooltip key={day} content={`${data.count} batches · ${data.mass.toFixed(1)} ton`}>{cell}</Tooltip>
           ) : (
             <Box key={day}>{cell}</Box>
           )

@@ -1,12 +1,7 @@
 'use client'
 
-import Chip from '@mui/material/Chip'
-import Table from '@mui/material/Table'
-import TableHead from '@mui/material/TableHead'
-import TableBody from '@mui/material/TableBody'
-import TableRow from '@mui/material/TableRow'
-import TableCell from '@mui/material/TableCell'
-import Box from '@mui/material/Box'
+import { Table, type Column } from '@/src/ds/components/Table'
+import { Badge } from '@/src/ds/components/Badge'
 import { SectionCard } from '../ui'
 
 interface LogEntry { at: string; user: string; action: string; detail: string }
@@ -18,34 +13,22 @@ const LOGS: LogEntry[] = [
   { at: '19/04/2026 10:15', user: 'M. Costa', action: 'Created', detail: 'Batch BA-0274 created (version 1.0)' },
 ]
 
-const color = (a: string): 'primary' | 'warning' | 'default' =>
-  a === 'Created' ? 'primary' : a === 'Changed' ? 'warning' : 'default'
+const variant = (a: string): 'accent' | 'warning' | 'neutral' =>
+  a === 'Created' ? 'accent' : a === 'Changed' ? 'warning' : 'neutral'
+
+type LogRow = LogEntry & { id: number }
+
+const COLUMNS: Column<LogRow>[] = [
+  { key: 'at', header: 'Date / Time', render: (l) => <span className="text-text-muted tabular-nums">{l.at}</span> },
+  { key: 'user', header: 'User' },
+  { key: 'action', header: 'Action', render: (l) => <Badge size="sm" variant={variant(l.action)}>{l.action}</Badge> },
+  { key: 'detail', header: 'Detail' },
+]
 
 export default function LogsTab() {
   return (
     <SectionCard title="Changelog">
-      <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 500, bgcolor: 'background.default' } }}>
-              <TableCell>Date / Time</TableCell>
-              <TableCell>User</TableCell>
-              <TableCell>Action</TableCell>
-              <TableCell>Detail</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {LOGS.map((l, i) => (
-              <TableRow key={i}>
-                <TableCell sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>{l.at}</TableCell>
-                <TableCell>{l.user}</TableCell>
-                <TableCell><Chip size="small" label={l.action} color={color(l.action)} variant={color(l.action) === 'default' ? 'outlined' : 'filled'} /></TableCell>
-                <TableCell>{l.detail}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Box>
+      <Table density="compact" columns={COLUMNS} data={LOGS.map((l, i) => ({ ...l, id: i }))} />
     </SectionCard>
   )
 }

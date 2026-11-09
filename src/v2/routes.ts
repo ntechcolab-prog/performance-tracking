@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  BATCH BOOK v2 · ROUTES — one URL per screen, batch and tab
+//  PERFORMANCE TRACKING v2 · ROUTES — one URL per screen, batch and tab
 // ═══════════════════════════════════════════════════════════════════════════
 //
 //  MIRA (the review tool) files every comment under the page's pathname, so a

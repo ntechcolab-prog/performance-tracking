@@ -1,12 +1,12 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import Skeleton from '@mui/material/Skeleton'
+import { Skeleton } from '@/src/ds/components/Skeleton'
 
 // CKEditor touches window on import, so it is only loaded in the browser.
 const RichTextField = dynamic(() => import('./RichTextEditor'), {
   ssr: false,
-  loading: () => <Skeleton variant="rounded" height={140} />,
+  loading: () => <Skeleton height={140} className="w-full rounded-card" />,
 })
 
 export default RichTextField

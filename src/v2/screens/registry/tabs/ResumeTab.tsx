@@ -3,26 +3,21 @@
 import { useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import MenuItem from '@mui/material/MenuItem'
-import Button from '@mui/material/Button'
-import InputAdornment from '@mui/material/InputAdornment'
-import Table from '@mui/material/Table'
-import TableHead from '@mui/material/TableHead'
-import TableBody from '@mui/material/TableBody'
-import TableRow from '@mui/material/TableRow'
-import TableCell from '@mui/material/TableCell'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CancelIcon from '@mui/icons-material/Cancel'
 import PendingIcon from '@mui/icons-material/Pending'
-import AddIcon from '@mui/icons-material/Add'
-import SearchIcon from '@mui/icons-material/Search'
+import { Plus, Search } from 'lucide-react'
+import { Button } from '@/src/ds/components/Button'
+import { Select } from '@/src/ds/components/Select'
+import { Table, type Column } from '@/src/ds/components/Table'
+import { Textfield } from '@/src/ds/components/Textfield'
+import { cn } from '@/src/ds/helpers/cn'
 import type { BatchForm, TargetData } from '@/src/shared/data/batchForm'
 import { BATCH_STATUSES, TARGET_TYPES } from '@/src/shared/data/batchForm'
 import { isLiveMode } from '@/src/shared/data/mockData'
 import { getLiveBatchRecord } from '@/src/v2/live/liveBatchStore'
 import { statusToDisplay } from '@/src/shared/api/adapters'
-import { SectionCard, Stat, KvGroup, KvList } from '../ui'
+import { SectionCard, Stat, KvGroup, KvList, dsTable } from '../ui'
 import { EditableCard, useEditing } from '../cardEdit'
 import BatchGraph, { GRAPH_WINDOW_START_MIN, GRAPH_WINDOW_END_MIN } from '../BatchGraph'
 import { useProductionMonitoring } from '@/src/shared/lib/productionMonitoring'
@@ -106,6 +101,18 @@ const ACTIVITY = [
   ['5', 'Recipe Start: Action Start', 'A. Costa', 'Manual action', '08/05/2021 17:48:22'],
   ['6', 'Limit value reached for fill level', 'System', 'Automatic change', '08/05/2021 16:12:03'],
   ['7', 'Batch BA-0074 created', 'J. Tanaka', 'Batch start', '05/05/2021 08:30:00'],
+]
+
+const opts = (list: string[]) => list.map((o) => ({ label: o, value: o }))
+const unit = (u: string) => <span className="text-sm">{u}</span>
+
+type ActivityRow = { id: string; desc: string; operator: string; event: string; date: string }
+const ACTIVITY_COLUMNS: Column<ActivityRow>[] = [
+  { key: 'id', header: '#', render: (r) => <span className="text-text-muted tabular-nums">{r.id}</span> },
+  { key: 'desc', header: 'Description' },
+  { key: 'operator', header: 'Operator', render: (r) => <span className="text-text-muted">{r.operator}</span> },
+  { key: 'event', header: 'Event', render: (r) => <span className="text-text-muted">{r.event}</span> },
+  { key: 'date', header: 'Date', render: (r) => <span className="whitespace-nowrap text-text-muted tabular-nums">{r.date}</span> },
 ]
 
 const dash = (v: unknown, unit = ''): string => (v == null || v === '' ? '—' : `${v}${unit ? ` ${unit}` : ''}`)
@@ -322,22 +329,26 @@ export default function ResumeTab({ form, onChange }: { form: BatchForm; onChang
               </Typography>
             )}
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(3, 1fr)' }, gap: 2.5 }}>
-              <TextField select size="small" label="Status" value={statusText} disabled={imported} onChange={(e) => onChange({ ...form, status: e.target.value })}>
-                {(BATCH_STATUSES.includes(statusText) ? BATCH_STATUSES : [statusText, ...BATCH_STATUSES]).map((o) => <MenuItem key={o} value={o}>{o}</MenuItem>)}
-              </TextField>
-              <TextField size="small" label="Progress (%)" value={progressText} disabled={imported} onChange={(e) => onChange({ ...form, progress: e.target.value })} />
-              <TextField
-                size="small" label="Total Batch Size" value={form.product.weight} disabled={imported}
+              <Select
+                label="Status"
+                value={statusText}
+                disabled={imported}
+                options={opts(BATCH_STATUSES.includes(statusText) ? BATCH_STATUSES : [statusText, ...BATCH_STATUSES])}
+                onChange={(v) => onChange({ ...form, status: v })}
+              />
+              <Textfield label="Progress (%)" value={progressText} disabled={imported} onChange={(e) => onChange({ ...form, progress: e.target.value })} />
+              <Textfield
+                label="Total Batch Size" value={form.product.weight} disabled={imported}
                 onChange={(e) => onChange({ ...form, product: { ...form.product, weight: e.target.value } })}
-                slotProps={{ input: { endAdornment: <InputAdornment position="end">kg</InputAdornment> } }}
+                trailingIcon={unit('kg')}
               />
               <Box sx={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 1 }}>
-                <TextField type="date" size="small" label="Start date" value={form.period.startDate} onChange={(e) => setPeriod('startDate', e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-                <TextField type="time" size="small" label="Start time" value={form.period.startTime} onChange={(e) => setPeriod('startTime', e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+                <Textfield type="date" label="Start date" value={form.period.startDate} onChange={(e) => setPeriod('startDate', e.target.value)} />
+                <Textfield type="time" label="Start time" value={form.period.startTime} onChange={(e) => setPeriod('startTime', e.target.value)} />
               </Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 1 }}>
-                <TextField type="date" size="small" label="End date" value={form.period.endDate} onChange={(e) => setPeriod('endDate', e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-                <TextField type="time" size="small" label="End time" value={form.period.endTime} onChange={(e) => setPeriod('endTime', e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+                <Textfield type="date" label="End date" value={form.period.endDate} onChange={(e) => setPeriod('endDate', e.target.value)} />
+                <Textfield type="time" label="End time" value={form.period.endTime} onChange={(e) => setPeriod('endTime', e.target.value)} />
               </Box>
               <Stat label="Batch Length" value={lengthText} />
             </Box>
@@ -364,13 +375,16 @@ export default function ResumeTab({ form, onChange }: { form: BatchForm; onChang
             <Box>
               <Typography variant="caption" sx={{ display: 'block', mb: 1.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'primary.dark' }}>Target</Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TextField select size="small" label="Target Type" value={target.type} onChange={(e) => setTarget('type', e.target.value)}>
-                  {(TARGET_TYPES.includes(target.type) || !target.type ? TARGET_TYPES : [target.type, ...TARGET_TYPES]).map((o) => <MenuItem key={o} value={o}>{o}</MenuItem>)}
-                </TextField>
-                <TextField size="small" label="Target Value" value={target.value} onChange={(e) => setTarget('value', e.target.value)} />
-                <TextField
-                  size="small" label="Maximum Temperature Allowed" value={target.maxTemperature} onChange={(e) => setTarget('maxTemperature', e.target.value)}
-                  slotProps={{ input: { endAdornment: <InputAdornment position="end">°C</InputAdornment> } }}
+                <Select
+                  label="Target Type"
+                  value={target.type}
+                  options={opts(TARGET_TYPES.includes(target.type) || !target.type ? TARGET_TYPES : [target.type, ...TARGET_TYPES])}
+                  onChange={(v) => setTarget('type', v)}
+                />
+                <Textfield label="Target Value" value={target.value} onChange={(e) => setTarget('value', e.target.value)} />
+                <Textfield
+                  label="Maximum Temperature Allowed" value={target.maxTemperature} onChange={(e) => setTarget('maxTemperature', e.target.value)}
+                  trailingIcon={unit('°C')}
                 />
               </Box>
             </Box>
@@ -400,7 +414,7 @@ export default function ResumeTab({ form, onChange }: { form: BatchForm; onChang
       <SectionCard
         title="Notes"
         id="resume-notes"
-        action={<Button size="small" variant="outlined" startIcon={<AddIcon />}>Add note</Button>}
+        action={<Button size="sm" variant="secondary" leadingIcon={<Plus className="size-4" />}>Add note</Button>}
       >
         <Box sx={{ display: 'grid', placeItems: 'center', py: 3, border: '1px dashed', borderColor: 'divider', borderRadius: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
           There are currently no notes in this section.
@@ -428,39 +442,25 @@ export default function ResumeTab({ form, onChange }: { form: BatchForm; onChang
           title="Action Log"
           id="resume-log"
           action={
-            <TextField
-              size="small" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search description…"
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
+            <Textfield
+              value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search description…"
+              aria-label="Search action log"
+              leadingIcon={<Search className="size-4" />}
+              className="h-8 w-56"
             />
           }
         >
-          <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 500, bgcolor: 'background.default' } }}>
-                  <TableCell sx={{ width: 48 }}>#</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell sx={{ width: 160 }}>Operator</TableCell>
-                  <TableCell>Event</TableCell>
-                  <TableCell sx={{ width: 180 }}>Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {activity.map((r) => (
-                  <TableRow key={r[0]}>
-                    <TableCell sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>{r[0]}</TableCell>
-                    <TableCell>{r[1]}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{r[2]}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{r[3]}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>{r[4]}</TableCell>
-                  </TableRow>
-                ))}
-                {activity.length === 0 && (
-                  <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>No entries match “{query}”.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </Box>
+          {activity.length > 0 ? (
+            <Table
+              density="compact"
+              columns={ACTIVITY_COLUMNS}
+              data={activity.map(([id, desc, operator, event, date]) => ({ id, desc, operator, event, date }))}
+            />
+          ) : (
+            <div className="rounded-card border border-border py-8 text-center text-sm text-text-muted">
+              No entries match “{query}”.
+            </div>
+          )}
         </SectionCard>
       )}
     </Box>
@@ -479,33 +479,33 @@ function EventTable({
   onHoverRow?: (frac: number | null) => void
 }) {
   return (
-    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
-      <Table size="small">
-        <TableHead>
-          <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 500, bgcolor: 'background.default' } }}>
-            {columns.map((c, i) => <TableCell key={c} sx={{ width: i < 2 ? 200 : 'auto' }}>{c}</TableCell>)}
-          </TableRow>
-        </TableHead>
-        <TableBody>
+    <div className={dsTable.wrap}>
+      <table className={dsTable.table}>
+        <thead>
+          <tr className={dsTable.headRow}>
+            {columns.map((c, i) => <th key={c} scope="col" className={cn(dsTable.th, 'px-3 py-1.5', i < 2 && 'w-[200px]')}>{c}</th>)}
+          </tr>
+        </thead>
+        <tbody>
           {rows.map((r, i) => (
-            <TableRow
+            <tr
               key={i}
-              hover
+              className={dsTable.row}
               onMouseEnter={() => onHoverRow?.(eventTimeToFrac(r[0]))}
               onMouseLeave={() => onHoverRow?.(null)}
             >
-              <TableCell sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>{r[0]}</TableCell>
-              <TableCell sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>{r[1]}</TableCell>
-              <TableCell>
-                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-                  <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: dot, flexShrink: 0 }} />
+              <td className={cn(dsTable.td, 'px-3 py-1.5 text-text-muted tabular-nums')}>{r[0]}</td>
+              <td className={cn(dsTable.td, 'px-3 py-1.5 text-text-muted tabular-nums')}>{r[1]}</td>
+              <td className={cn(dsTable.td, 'px-3 py-1.5')}>
+                <span className="inline-flex items-center gap-2">
+                  <span className="size-1.5 shrink-0 rounded-round" style={{ backgroundColor: dot }} />
                   {r[2]}
-                </Box>
-              </TableCell>
-            </TableRow>
+                </span>
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
-    </Box>
+        </tbody>
+      </table>
+    </div>
   )
 }

@@ -2,30 +2,26 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
-import IconButton from '@mui/material/IconButton'
-import TextField from '@mui/material/TextField'
-import InputAdornment from '@mui/material/InputAdornment'
-import Chip from '@mui/material/Chip'
-import Checkbox from '@mui/material/Checkbox'
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
-import Divider from '@mui/material/Divider'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import FormControlLabel from '@mui/material/FormControlLabel'
 import type { Theme } from '@mui/material/styles'
 import type { EChartsOption } from 'echarts'
 import EChart from '@/src/v2/components/echarts/EChart'
 import { withAlpha } from '@/src/v2/screens/registry/ui'
+import { Card } from '@/src/ds/components/Card'
+import { Button } from '@/src/ds/components/Button'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Textfield } from '@/src/ds/components/Textfield'
+import { Badge } from '@/src/ds/components/Badge'
+import { Checkbox } from '@/src/ds/components/Checkbox'
+import { Popover } from '@/src/ds/components/Popover'
+import { Divider } from '@/src/ds/components/Divider'
+import { SegmentedControl } from '@/src/ds/components/SegmentedControl'
 
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
 import AddIcon from '@mui/icons-material/Add'
@@ -51,10 +47,11 @@ import {
 import { printElement } from '@/src/shared/lib/exportPdf'
 import { exportCsv, exportXlsx, type Sheet, type Cell } from '@/src/shared/lib/exportData'
 
-// MUI-native Analysis screen. Same business logic as the Tailwind v0/v1 version
+// v2 Analysis screen. Same business logic as the Tailwind v0/v1 version
 // (saved-analyses list persisted per company + an editor that picks up to 8
 // batches and compares them across metrics as tables / small-multiples charts).
-// Only the presentation is rebuilt on MUI + MUI X Charts.
+// Widgets come from the Techco.lab DS; the row-clickable / sticky-column tables
+// stay on MUI Table (the DS Table has no row click, disabled rows or sticky cells).
 
 const MAX = 8
 const PRINT_ID = 'analysis-comparison-print-v2'
@@ -133,10 +130,10 @@ export default function AnalysisV2() {
         <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>Analysis</Typography>
       </Box>
 
-      <Card sx={{ p: 3 }}>
+      <Card className="p-6">
         <Box sx={{ mb: 2.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
           <Typography variant="overline" sx={{ fontWeight: 600, color: 'text.primary' }}>Saved Analyses</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={openNew}>New Analysis</Button>
+          <Button variant="primary" leadingIcon={<AddIcon fontSize="small" />} onClick={openNew}>New Analysis</Button>
         </Box>
 
         {analyses.length === 0 ? (
@@ -170,13 +167,13 @@ export default function AnalysisV2() {
                     <TableCell sx={{ color: 'text.secondary' }}>{fmtDate(a.createdAt)}</TableCell>
                     <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                       <IconButton
-                        size="small"
+                        size="sm"
+                        variant="ghost"
                         aria-label={`Delete ${a.name}`}
                         onClick={() => remove(a.id)}
-                        sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
+                        className="text-text-muted hover:text-danger"
+                        icon={<DeleteOutlineIcon fontSize="small" />}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -235,14 +232,12 @@ function AnalysisEditor({
       {/* editor header */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <IconButton aria-label="Back" onClick={onBack} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
-            <ChevronLeftIcon />
-          </IconButton>
-          <TextField
-            size="small"
+          <IconButton aria-label="Back" onClick={onBack} variant="secondary" icon={<ChevronLeftIcon />} />
+          <Textfield
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Analysis name"
+            aria-label="Analysis name"
           />
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -251,14 +246,14 @@ function AnalysisEditor({
             printId={PRINT_ID}
             filenameBase={`analysis-${(name || 'comparison').toLowerCase().replace(/\s+/g, '-')}`}
           />
-          <Button variant="contained" startIcon={<SaveIcon />} onClick={save} disabled={selectedIds.length === 0}>
+          <Button variant="primary" leadingIcon={<SaveIcon fontSize="small" />} onClick={save} disabled={selectedIds.length === 0}>
             Save
           </Button>
         </Box>
       </Box>
 
       {/* batch picker */}
-      <Card sx={{ p: 2.5 }}>
+      <Card className="overflow-visible p-5">
         <Box sx={{ mb: 1.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
           <Typography variant="overline" sx={{ fontWeight: 600, color: 'text.primary' }}>
             Select batches{' '}
@@ -266,35 +261,32 @@ function AnalysisEditor({
               ({selectedIds.length}/{MAX})
             </Box>
           </Typography>
-          <TextField
-            size="small"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search id, machine, recipe …"
-            sx={{ minWidth: 260 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>
-                ),
-              },
-            }}
-          />
+          <div className="min-w-[260px]">
+            <Textfield
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search id, machine, recipe …"
+              aria-label="Search batches"
+              leadingIcon={<SearchIcon fontSize="small" />}
+            />
+          </div>
         </Box>
 
         {/* selected chips */}
         {selected.length > 0 && (
           <Box sx={{ mb: 1.5, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {selected.map((b) => (
-              <Chip
-                key={b.id}
-                size="small"
-                color="primary"
-                variant="outlined"
-                label={`${b.id} · ${b.machine}`}
-                onDelete={() => toggle(b.id)}
-                deleteIcon={<CloseIcon />}
-              />
+              <Badge key={b.id} variant="accent" className="pr-1">
+                {`${b.id} · ${b.machine}`}
+                <button
+                  type="button"
+                  aria-label={`Remove ${b.id}`}
+                  onClick={() => toggle(b.id)}
+                  className="inline-flex size-5 items-center justify-center rounded-round hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                >
+                  <CloseIcon sx={{ fontSize: 14 }} />
+                </button>
+              </Badge>
             ))}
           </Box>
         )}
@@ -318,13 +310,15 @@ function AnalysisEditor({
                     }}
                   >
                     <TableCell padding="checkbox">
-                      <Checkbox
-                        size="small"
-                        checked={on}
-                        disabled={disabled}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={() => toggle(b.id)}
-                      />
+                      {/* stop the row's onClick from also toggling (label + input both bubble) */}
+                      <span className="inline-flex pl-3" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          aria-label={`Select ${b.id}`}
+                          checked={on}
+                          disabled={disabled}
+                          onChange={() => toggle(b.id)}
+                        />
+                      </span>
                     </TableCell>
                     <TableCell sx={{ fontWeight: 500, color: 'text.primary' }}>{b.id}</TableCell>
                     <TableCell sx={{ color: 'text.primary' }}>{b.machine}</TableCell>
@@ -345,22 +339,28 @@ function AnalysisEditor({
 
       {/* comparison */}
       {selected.length < 2 ? (
-        <Card sx={{ p: 5, textAlign: 'center', border: '1px dashed', borderColor: 'divider' }}>
+        <Card className="border-dashed p-10 text-center">
           <BarChartIcon sx={{ color: 'text.disabled', fontSize: 32 }} />
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Select at least 2 batches to compare.
           </Typography>
         </Card>
       ) : (
-        <Card sx={{ p: 2.5 }}>
+        <Card className="p-5">
           <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
             <Typography variant="overline" sx={{ fontWeight: 600, color: 'text.primary' }}>Comparison</Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <MetricPicker selected={metricKeys} onChange={setMetricKeys} />
-              <ToggleButtonGroup exclusive size="small" value={view} onChange={(_, v) => v && setView(v)}>
-                <ToggleButton value="table">Table</ToggleButton>
-                <ToggleButton value="chart">Chart</ToggleButton>
-              </ToggleButtonGroup>
+              <SegmentedControl
+                size="sm"
+                aria-label="Comparison view"
+                value={view}
+                onChange={(v) => v && setView(v as 'table' | 'chart')}
+                options={[
+                  { value: 'table', label: 'Table' },
+                  { value: 'chart', label: 'Chart' },
+                ]}
+              />
             </Box>
           </Box>
 
@@ -657,8 +657,7 @@ function Insights({
 // ---------------------------------------------------------------------------
 
 function MetricPicker({ selected, onChange }: { selected: Set<string>; onChange: (s: Set<string>) => void }) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const open = Boolean(anchorEl)
+  const [open, setOpen] = useState(false)
 
   const groups = useMemo(() => {
     const map = new Map<string, BatchMetricDef[]>()
@@ -683,25 +682,24 @@ function MetricPicker({ selected, onChange }: { selected: Set<string>; onChange:
   }
 
   return (
-    <>
-      <Button
-        variant="outlined"
-        size="small"
-        color="inherit"
-        onClick={(e) => setAnchorEl(e.currentTarget)}
-        endIcon={<KeyboardArrowDownIcon sx={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />}
-        sx={{ color: 'text.secondary', borderColor: 'divider' }}
-      >
-        Metrics ({selected.size})
-      </Button>
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={() => setAnchorEl(null)}
-        slotProps={{ paper: { sx: { width: 288, maxHeight: '26rem', p: 1.5 } } }}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
+    <Popover
+      open={open}
+      onOpenChange={setOpen}
+      side="bottom"
+      align="end"
+      aria-label="Metrics"
+      className="max-h-[26rem] w-72 overflow-auto"
+      trigger={
+        <Button
+          variant="secondary"
+          size="sm"
+          className="text-text-muted"
+        >
+          Metrics ({selected.size})
+          <KeyboardArrowDownIcon fontSize="small" sx={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+        </Button>
+      }
+    >
         {groups.map(([group, metrics], gi) => {
           const allOn = metrics.every((m) => selected.has(m.key))
           return (
@@ -717,23 +715,21 @@ function MetricPicker({ selected, onChange }: { selected: Set<string>; onChange:
                 <span>{group}</span>
                 <Box component="span" sx={{ color: 'primary.main' }}>{allOn ? 'Clear' : 'All'}</Box>
               </Box>
-              {metrics.map((m) => (
-                <FormControlLabel
-                  key={m.key}
-                  sx={{ display: 'flex', ml: 0, width: '100%', '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
-                  control={<Checkbox size="small" checked={selected.has(m.key)} onChange={() => toggle(m.key)} sx={{ py: 0.25 }} />}
-                  label={
-                    <Box component="span">
-                      {m.label} <Box component="span" sx={{ color: 'text.disabled' }}>({m.unit})</Box>
-                    </Box>
-                  }
-                />
-              ))}
+              <div className="flex flex-col gap-1.5 py-0.5">
+                {metrics.map((m) => (
+                  <Checkbox
+                    key={m.key}
+                    label={`${m.label} (${m.unit})`}
+                    checked={selected.has(m.key)}
+                    onChange={() => toggle(m.key)}
+                    className="w-full"
+                  />
+                ))}
+              </div>
             </Box>
           )
         })}
-      </Menu>
-    </>
+    </Popover>
   )
 }
 
@@ -743,8 +739,7 @@ function MetricPicker({ selected, onChange }: { selected: Set<string>; onChange:
 // ---------------------------------------------------------------------------
 
 function ExportMenu({ batches, printId, filenameBase }: { batches: Batch[]; printId: string; filenameBase: string }) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const open = Boolean(anchorEl)
+  const [open, setOpen] = useState(false)
   const [metricKeys, setMetricKeys] = useState<Set<string>>(new Set(BATCH_METRICS.map((m) => m.key)))
   const [batchIds, setBatchIds] = useState<Set<string>>(new Set(batches.map((b) => b.id)))
 
@@ -786,29 +781,29 @@ function ExportMenu({ batches, printId, filenameBase }: { batches: Batch[]; prin
 
   const run = (fn: () => void | Promise<void>) => {
     Promise.resolve(fn()).catch(() => {})
-    setAnchorEl(null)
+    setOpen(false)
   }
 
   return (
-    <>
-      <Button
-        variant="outlined"
-        size="small"
-        startIcon={<DownloadIcon />}
-        endIcon={<KeyboardArrowDownIcon sx={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />}
-        onClick={(e) => setAnchorEl(e.currentTarget)}
-        className="no-print"
-      >
-        Export
-      </Button>
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={() => setAnchorEl(null)}
-        slotProps={{ paper: { sx: { width: 288, p: 1.5 } } }}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
+    <Popover
+      open={open}
+      onOpenChange={setOpen}
+      side="bottom"
+      align="end"
+      aria-label="Export"
+      className="w-72"
+      trigger={
+        <Button
+          variant="secondary"
+          size="md"
+          leadingIcon={<DownloadIcon fontSize="small" />}
+          className="no-print"
+        >
+          Export
+          <KeyboardArrowDownIcon fontSize="small" sx={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+        </Button>
+      }
+    >
         <ExportGroup title="Metrics">
           {BATCH_METRICS.map((m) => (
             <ExportCheckRow
@@ -830,17 +825,16 @@ function ExportMenu({ batches, printId, filenameBase }: { batches: Batch[]; prin
           ))}
         </ExportGroup>
 
-        <Divider sx={{ my: 1 }} />
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button size="small" variant="outlined" color="inherit" fullWidth disabled={!ready}
+        <Divider className="my-2" />
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" className="flex-1" disabled={!ready}
             onClick={() => run(() => printElement(printId, 'Analysis · Comparison'))}>PDF</Button>
-          <Button size="small" variant="outlined" color="inherit" fullWidth disabled={!ready}
+          <Button size="sm" variant="secondary" className="flex-1" disabled={!ready}
             onClick={() => run(() => exportCsv(filenameBase, buildSheets()[0]))}>CSV</Button>
-          <Button size="small" variant="outlined" color="inherit" fullWidth disabled={!ready}
+          <Button size="sm" variant="secondary" className="flex-1" disabled={!ready}
             onClick={() => run(() => exportXlsx(filenameBase, buildSheets()))}>Excel</Button>
-        </Box>
-      </Menu>
-    </>
+        </div>
+    </Popover>
   )
 }
 
@@ -850,17 +844,11 @@ function ExportGroup({ title, children }: { title: string; children: ReactNode }
       <Typography variant="caption" sx={{ display: 'block', mb: 0.5, fontWeight: 600, textTransform: 'uppercase', color: 'text.disabled', fontSize: '0.625rem' }}>
         {title}
       </Typography>
-      <Box sx={{ maxHeight: 160, overflow: 'auto' }}>{children}</Box>
+      <Box sx={{ maxHeight: 160, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 0.5 }}>{children}</Box>
     </Box>
   )
 }
 
 function ExportCheckRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
-  return (
-    <FormControlLabel
-      sx={{ display: 'flex', ml: 0, width: '100%', '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
-      control={<Checkbox size="small" checked={checked} onChange={onChange} sx={{ py: 0.25 }} />}
-      label={<Box component="span" sx={{ display: 'block' }}>{label}</Box>}
-    />
-  )
+  return <Checkbox label={label} checked={checked} onChange={onChange} className="w-full py-0.5" />
 }

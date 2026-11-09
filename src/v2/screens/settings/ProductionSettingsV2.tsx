@@ -2,21 +2,13 @@
 
 import { useState } from 'react'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import DialogTitle from '@mui/material/DialogTitle'
-import IconButton from '@mui/material/IconButton'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import TextField from '@mui/material/TextField'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
+import { Button } from '@/src/ds/components/Button'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Table, type Column } from '@/src/ds/components/Table'
+import { Textfield } from '@/src/ds/components/Textfield'
+import { Tooltip } from '@/src/ds/components/Tooltip'
+import { AlertDialog } from '@/src/ds/components/AlertDialog'
 import AddIcon from '@mui/icons-material/Add'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
@@ -72,56 +64,121 @@ export default function ProductionSettingsV2() {
     if (e.key === 'Escape') cancel()
   }
 
-  const editRow = (key: string) => (
-    <TableRow key={key} sx={{ bgcolor: 'background.default' }}>
-      <TableCell>
-        <TextField
-          autoFocus
-          size="small"
-          fullWidth
-          value={draft.name}
-          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-          onKeyDown={onKey}
-          placeholder="e.g. d97"
-          slotProps={{ htmlInput: { 'aria-label': 'Variable name' } }}
-          error={duplicate}
-          helperText={duplicate ? 'This variable already exists' : undefined}
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          size="small"
-          value={draft.unit}
-          onChange={(e) => setDraft({ ...draft, unit: e.target.value })}
-          onKeyDown={onKey}
-          placeholder="e.g. µm"
-          slotProps={{ htmlInput: { 'aria-label': 'Unit' } }}
-          sx={{ width: 140 }}
-        />
-      </TableCell>
-      <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-        <Tooltip title="Save">
-          <span>
-            <IconButton size="small" color="primary" onClick={save} disabled={!canSave} aria-label="Save variable">
-              <CheckIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="Cancel">
-          <IconButton size="small" onClick={cancel} aria-label="Cancel">
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </TableCell>
-    </TableRow>
-  )
+  // Row model for the DS Table: `id` is the list index, or '__new' for the add row.
+  type Row = { id: number | string; name: string; unit: string; actions: null }
+  const isEditing = (r: Row) => (r.id === '__new' ? editing === 'new' : editing === r.id)
+  const rows: Row[] = [
+    ...vars.map((v, i) => ({ id: i, name: v.name, unit: v.unit, actions: null })),
+    ...(editing === 'new' ? [{ id: '__new', name: '', unit: '', actions: null }] : []),
+  ]
+
+  const columns: Column<Row>[] = [
+    {
+      key: 'name',
+      header: 'Variable',
+      render: (r) =>
+        isEditing(r) ? (
+          <Textfield
+            autoFocus
+            value={draft.name}
+            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            onKeyDown={onKey}
+            placeholder="e.g. d97"
+            aria-label="Variable name"
+            error={duplicate ? 'This variable already exists' : undefined}
+            className="h-8"
+          />
+        ) : (
+          <span className="font-medium">{r.name}</span>
+        ),
+    },
+    {
+      key: 'unit',
+      header: 'Unit',
+      render: (r) =>
+        isEditing(r) ? (
+          <div className="w-[140px]">
+            <Textfield
+              value={draft.unit}
+              onChange={(e) => setDraft({ ...draft, unit: e.target.value })}
+              onKeyDown={onKey}
+              placeholder="e.g. µm"
+              aria-label="Unit"
+              className="h-8"
+            />
+          </div>
+        ) : (
+          <span className={r.unit ? 'text-text' : 'text-text-muted'}>{r.unit || '—'}</span>
+        ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right',
+      render: (r) =>
+        isEditing(r) ? (
+          <div className="inline-flex gap-1 whitespace-nowrap">
+            <Tooltip content="Save">
+              <span className="inline-flex">
+                <IconButton
+                  size="sm"
+                  variant="ghost"
+                  className="text-accent"
+                  onClick={save}
+                  disabled={!canSave}
+                  aria-label="Save variable"
+                  icon={<CheckIcon fontSize="small" />}
+                />
+              </span>
+            </Tooltip>
+            <Tooltip content="Cancel">
+              <IconButton size="sm" variant="ghost" onClick={cancel} aria-label="Cancel" icon={<CloseIcon fontSize="small" />} />
+            </Tooltip>
+          </div>
+        ) : (
+          <div className="inline-flex gap-1 whitespace-nowrap">
+            <Tooltip content="Edit">
+              <span className="inline-flex">
+                <IconButton
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => startEdit(r.id as number)}
+                  disabled={editing !== null}
+                  aria-label={`Edit ${r.name}`}
+                  icon={<EditIcon fontSize="small" />}
+                />
+              </span>
+            </Tooltip>
+            <Tooltip content="Delete">
+              <span className="inline-flex">
+                <IconButton
+                  size="sm"
+                  variant="ghost"
+                  className="text-danger"
+                  onClick={() => setToDelete(r.id as number)}
+                  disabled={editing !== null}
+                  aria-label={`Delete ${r.name}`}
+                  icon={<DeleteIcon fontSize="small" />}
+                />
+              </span>
+            </Tooltip>
+          </div>
+        ),
+    },
+  ]
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <FormSectionV2
         title="Result variables"
         action={
-          <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={startAdd} disabled={editing !== null}>
+          <Button
+            size="sm"
+            variant="secondary"
+            leadingIcon={<AddIcon fontSize="small" />}
+            onClick={startAdd}
+            disabled={editing !== null}
+          >
             New variable
           </Button>
         }
@@ -131,72 +188,22 @@ export default function ProductionSettingsV2() {
           to what batches can pick from now on — values already recorded on a batch are kept.
         </Typography>
 
-        <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflowX: 'auto' }}>
-          <Table size="small" sx={{ minWidth: 420 }}>
-            <TableHead>
-              <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 500, bgcolor: 'background.default' } }}>
-                <TableCell>Variable</TableCell>
-                <TableCell sx={{ width: 180 }}>Unit</TableCell>
-                <TableCell align="right" sx={{ width: 96 }} />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {vars.map((v, i) =>
-                editing === i ? (
-                  editRow(v.name)
-                ) : (
-                  <TableRow key={v.name} hover>
-                    <TableCell sx={{ fontSize: '0.875rem', fontWeight: 500 }}>{v.name}</TableCell>
-                    <TableCell sx={{ fontSize: '0.875rem', color: v.unit ? 'text.primary' : 'text.secondary' }}>
-                      {v.unit || '—'}
-                    </TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                      <Tooltip title="Edit">
-                        <span>
-                          <IconButton size="small" onClick={() => startEdit(i)} disabled={editing !== null} aria-label={`Edit ${v.name}`}>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <span>
-                          <IconButton size="small" color="error" onClick={() => setToDelete(i)} disabled={editing !== null} aria-label={`Delete ${v.name}`}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ),
-              )}
-
-              {editing === 'new' && editRow('__new')}
-
-              {vars.length === 0 && editing !== 'new' && (
-                <TableRow>
-                  <TableCell colSpan={3} sx={{ py: 2.5, color: 'text.secondary', fontSize: '0.875rem' }}>
-                    No variables yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Box>
+        <Table columns={columns} data={rows} density="compact" className="min-w-0 [&_table]:min-w-[420px]" />
+        {vars.length === 0 && editing !== 'new' && (
+          <p className="px-3 py-5 text-sm text-text-muted">No variables yet.</p>
+        )}
       </FormSectionV2>
 
-      <Dialog open={toDelete !== null} onClose={() => setToDelete(null)}>
-        <DialogTitle>Delete {toDelete !== null ? vars[toDelete]?.name : ''}?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            New batches won&apos;t be able to pick this variable. Batches that already use it keep their
-            expected and measured values.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setToDelete(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={remove}>Delete</Button>
-        </DialogActions>
-      </Dialog>
+      <AlertDialog
+        open={toDelete !== null}
+        onClose={() => setToDelete(null)}
+        onConfirm={remove}
+        title={`Delete ${toDelete !== null ? (vars[toDelete]?.name ?? '') : ''}?`}
+        description="New batches won't be able to pick this variable. Batches that already use it keep their expected and measured values."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+      />
     </Box>
   )
 }

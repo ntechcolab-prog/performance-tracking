@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
-import Tabs from '@mui/material/Tabs'
-import Tab from '@mui/material/Tab'
-import Divider from '@mui/material/Divider'
+import { Card } from '@/src/ds/components/Card'
+import { Tabs, TabList, Tab } from '@/src/ds/components/Tabs'
+import { Divider } from '@/src/ds/components/Divider'
 import Typography from '@mui/material/Typography'
 import FiltersV2, { type Period } from '../components/FiltersV2'
 import CalendarV2 from '../components/CalendarV2'
@@ -134,13 +133,16 @@ export default function DashboardV2() {
 
   return (
     <Box sx={{ maxWidth: '75rem', mx: 'auto', display: 'flex', flexDirection: 'column', gap: 2.5, p: 2.5 }}>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ width: 'fit-content' }}>
-        <Tab label="Batches" />
-        <Tab label="Machine" />
+      <Tabs value={String(tab)} onValueChange={(v) => setTab(Number(v))} className="w-fit">
+        <TabList aria-label="Dashboard view">
+          <Tab value="0">Batches</Tab>
+          <Tab value="1">Machine</Tab>
+        </TabList>
       </Tabs>
 
       {tab === 0 ? (
-        <Card sx={{ overflow: 'hidden' }}>
+        // overflow-visible so the filter dropdowns are not clipped by the card
+        <Card className="overflow-visible">
           <FiltersV2
             machines={machines} recipes={recipes} setMachines={setMachines} setRecipes={setRecipes}
             period={period} setPeriod={setPeriod} monthKey={monthKey} setMonthKey={setMonthKey}
@@ -171,7 +173,7 @@ export default function DashboardV2() {
           )}
         </Card>
       ) : (
-        <Card sx={{ overflow: 'hidden' }}>
+        <Card>
           <MachineTabV2 />
         </Card>
       )}

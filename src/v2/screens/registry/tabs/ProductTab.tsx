@@ -2,22 +2,18 @@
 
 import { useState } from 'react'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import IconButton from '@mui/material/IconButton'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import TextField from '@mui/material/TextField'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import DeleteIcon from '@mui/icons-material/DeleteOutlined'
+import { Trash2 } from 'lucide-react'
+import { Button } from '@/src/ds/components/Button'
+import { IconButton } from '@/src/ds/components/IconButton'
+import { Textfield } from '@/src/ds/components/Textfield'
+import { Tooltip } from '@/src/ds/components/Tooltip'
+import { cn } from '@/src/ds/helpers/cn'
 import UploadIcon from '@mui/icons-material/FileUploadOutlined'
 import type { ProductData, ResultsData } from '@/src/shared/data/batchForm'
 import { ensureVariable, useResultVariables } from '@/src/shared/lib/resultVariables'
 import VariableField from '@/src/v2/components/VariableField'
-import { withAlpha } from '../ui'
+import { dsTable, withAlpha } from '../ui'
 import { EditableCard, useEditing } from '../cardEdit'
 import RichTextField from '@/src/v2/components/RichTextField'
 
@@ -112,78 +108,85 @@ export default function ProductTab({ value, onChange, results, onResultsChange }
           in Settings › Production.
         </Typography>
 
-        <Box sx={{ mt: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, overflowX: 'auto' }}>
-          <Table size="small" sx={{ minWidth: 420 }}>
-            <TableHead>
-              <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 500, bgcolor: 'background.default' } }}>
-                <TableCell sx={{ width: 220 }}>Variable</TableCell>
-                <TableCell>Expected value</TableCell>
-                {editExpected && <TableCell align="right" sx={{ width: 72 }} />}
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className={cn(dsTable.wrap, 'mt-4')}>
+          <table className={cn(dsTable.table, 'min-w-[420px]')}>
+            <thead>
+              <tr className={dsTable.headRow}>
+                <th scope="col" className={cn(dsTable.th, 'w-[220px] py-2')}>Variable</th>
+                <th scope="col" className={cn(dsTable.th, 'py-2')}>Expected value</th>
+                {editExpected && <th scope="col" className={cn(dsTable.th, 'w-[72px] py-2')}><span className="sr-only">Actions</span></th>}
+              </tr>
+            </thead>
+            <tbody>
               {entries.map(([v, val]) => (
-                <TableRow key={v} hover>
-                  <TableCell sx={{ fontSize: '0.875rem', fontWeight: 500 }}>{v}</TableCell>
-                  <TableCell sx={{ fontSize: '0.875rem', fontVariantNumeric: 'tabular-nums' }}>
+                <tr key={v} className={dsTable.row}>
+                  <td className={cn(dsTable.td, 'py-2 font-medium')}>{v}</td>
+                  <td className={cn(dsTable.td, 'py-2 tabular-nums')}>
                     {editExpected ? (
-                      <TextField
-                        size="small"
-                        value={val}
-                        onChange={(e) => setExpected(v, e.target.value)}
-                        placeholder="0000"
-                        slotProps={{ htmlInput: { 'aria-label': `Expected value for ${v}` } }}
-                        sx={{ width: 120 }}
-                      />
+                      <div className="w-[120px]">
+                        <Textfield
+                          value={val}
+                          onChange={(e) => setExpected(v, e.target.value)}
+                          placeholder="0000"
+                          aria-label={`Expected value for ${v}`}
+                          className="h-8"
+                        />
+                      </div>
                     ) : (val || '—')}
-                  </TableCell>
+                  </td>
                   {editExpected && (
-                    <TableCell align="right">
-                      <Tooltip title="Remove">
-                        <IconButton size="small" color="error" onClick={() => removeExpected(v)} aria-label={`Remove ${v}`}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                    <td className={cn(dsTable.td, 'py-2 text-right')}>
+                      <Tooltip content="Remove">
+                        <IconButton
+                          size="sm"
+                          variant="ghost"
+                          className="text-danger"
+                          onClick={() => removeExpected(v)}
+                          aria-label={`Remove ${v}`}
+                          icon={<Trash2 className="size-4" />}
+                        />
                       </Tooltip>
-                    </TableCell>
+                    </td>
                   )}
-                </TableRow>
+                </tr>
               ))}
 
               {entries.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={editExpected ? 3 : 2} sx={{ py: 2.5, color: 'text.secondary', fontSize: '0.875rem' }}>
+                <tr className="border-b border-border last:border-0">
+                  <td colSpan={editExpected ? 3 : 2} className="px-4 py-5 text-text-muted">
                     No expected values yet.
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               )}
 
               {/* input row — only while the card is in edit mode */}
               {editExpected && (
-              <TableRow sx={{ bgcolor: 'background.default' }}>
-                <TableCell>
+              <tr className="bg-surface">
+                <td className={cn(dsTable.td, 'py-2')}>
                   <VariableField value={varDraft} onChange={setVarDraft} catalog={catalog} exclude={Object.keys(expected)} />
-                </TableCell>
-                <TableCell>
-                  <TextField
-                    size="small"
-                    value={valDraft}
-                    onChange={(e) => setValDraft(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addExpected()}
-                    placeholder="0000"
-                    slotProps={{ htmlInput: { 'aria-label': 'Expected value' } }}
-                    sx={{ width: 120 }}
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <Button size="small" variant="outlined" onClick={addExpected} disabled={!varDraft.trim()} sx={{ whiteSpace: 'nowrap' }}>
+                </td>
+                <td className={cn(dsTable.td, 'py-2')}>
+                  <div className="w-[120px]">
+                    <Textfield
+                      value={valDraft}
+                      onChange={(e) => setValDraft(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addExpected()}
+                      placeholder="0000"
+                      aria-label="Expected value"
+                      className="h-8"
+                    />
+                  </div>
+                </td>
+                <td className={cn(dsTable.td, 'py-2 text-right')}>
+                  <Button size="sm" variant="secondary" onClick={addExpected} disabled={!varDraft.trim()} className="whitespace-nowrap">
                     + Add
                   </Button>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
               )}
-            </TableBody>
-          </Table>
-        </Box>
+            </tbody>
+          </table>
+        </div>
       </EditableCard>
 
       <EditableCard cardId="product-attachments" title="Attachments">

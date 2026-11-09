@@ -2,14 +2,12 @@
 
 import { useState } from 'react'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
-import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
-import Radio from '@mui/material/Radio'
-import AddIcon from '@mui/icons-material/Add'
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import DownloadIcon from '@mui/icons-material/FileDownloadOutlined'
+import { ChevronLeft, ChevronRight, Download, Plus } from 'lucide-react'
+import { Card } from '@/src/ds/components/Card'
+import { Button } from '@/src/ds/components/Button'
+import { Radio } from '@/src/ds/components/Radio'
+import { cn } from '@/src/ds/helpers/cn'
 import DescriptionIcon from '@mui/icons-material/DescriptionOutlined'
 import type { ReportItem } from '@/src/shared/data/batchForm'
 import { SectionCard, withAlpha } from '../ui'
@@ -35,10 +33,10 @@ export default function ReportsTab({ value, onChange }: { value: ReportItem[]; o
       {!picking ? (
         <Button
           onClick={() => setPicking(true)}
-          variant="outlined"
-          startIcon={<AddIcon />}
-          fullWidth
-          sx={{ py: 2.5, borderStyle: 'solid' }}
+          variant="secondary"
+          size="lg"
+          leadingIcon={<Plus className="size-5" />}
+          className="h-16 w-full border-accent text-accent"
         >
           Create a Report
         </Button>
@@ -53,13 +51,16 @@ export default function ReportsTab({ value, onChange }: { value: ReportItem[]; o
                   <Card
                     key={t.id}
                     onClick={() => setSelected(t.id)}
-                    sx={{
-                      p: 2, cursor: 'pointer', textAlign: 'left',
-                      borderColor: active ? 'primary.main' : 'divider',
-                    }}
+                    className={cn('cursor-pointer p-4 text-left transition-colors', active ? 'border-accent ring-1 ring-accent' : 'border-border')}
                   >
                     <Box sx={{ position: 'relative', height: 128, display: 'grid', placeItems: 'center', borderRadius: 1.5, bgcolor: 'background.default' }}>
-                      <Radio checked={active} size="small" sx={{ position: 'absolute', left: 4, top: 4 }} />
+                      <Radio
+                        checked={active}
+                        onChange={() => setSelected(t.id)}
+                        name="report-template"
+                        aria-label={t.name}
+                        className="absolute left-2 top-2"
+                      />
                       <TemplateThumb />
                     </Box>
                     <Typography variant="subtitle2" sx={{ mt: 2, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t.name}</Typography>
@@ -71,8 +72,8 @@ export default function ReportsTab({ value, onChange }: { value: ReportItem[]; o
           </SectionCard>
 
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Button onClick={() => setPicking(false)} variant="contained" startIcon={<ChevronLeftIcon />}>Back</Button>
-            <Button onClick={create} variant="contained" endIcon={<ChevronRightIcon />}>Next</Button>
+            <Button onClick={() => setPicking(false)} variant="primary" leadingIcon={<ChevronLeft className="size-4" />}>Back</Button>
+            <Button onClick={create} variant="primary">Next<ChevronRight className="size-4" aria-hidden /></Button>
           </Box>
         </>
       )}
@@ -91,7 +92,7 @@ export default function ReportsTab({ value, onChange }: { value: ReportItem[]; o
                     <Typography variant="caption" color="text.secondary">{r.id} · {r.createdAt}</Typography>
                   </Box>
                 </Box>
-                <Button size="small" startIcon={<DownloadIcon fontSize="small" />}>Download</Button>
+                <Button size="sm" variant="ghost" className="text-accent" leadingIcon={<Download className="size-4" />}>Download</Button>
               </Box>
             ))}
           </Box>

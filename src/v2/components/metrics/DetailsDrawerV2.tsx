@@ -1,11 +1,9 @@
 'use client'
 
-import Drawer from '@mui/material/Drawer'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import Chip from '@mui/material/Chip'
-import CloseIcon from '@mui/icons-material/Close'
+import { Drawer } from '@/src/ds/components/Drawer'
+import { Badge } from '@/src/ds/components/Badge'
 import ArrowUpIcon from '@mui/icons-material/ArrowDropUp'
 import ArrowDownIcon from '@mui/icons-material/ArrowDropDown'
 import type { EChartsOption } from 'echarts'
@@ -43,28 +41,13 @@ export default function DetailsDrawerV2({
   open, kind, title, subtitle, batches, kpi, daily, byMachine, byRecipe, richViz, onClose,
 }: DetailsDrawerV2Props) {
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      slotProps={{ paper: { sx: { width: '100%', maxWidth: '30rem', display: 'flex', flexDirection: 'column' } } }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1,
-        px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>{title}</Typography>
-          {subtitle && <Typography variant="body2" sx={{ mt: 0.25, color: 'text.secondary' }}>{subtitle}</Typography>}
-        </Box>
-        <IconButton onClick={onClose} aria-label="Close" sx={{ color: 'text.secondary' }}>
-          <CloseIcon />
-        </IconButton>
-      </Box>
-
-      <Box sx={{ flex: 1, overflow: 'auto', px: 3, py: 2.5 }}>
-        {kind === 'kpi'
-          ? <KpiDetail kpi={kpi} daily={daily} byMachine={byMachine} byRecipe={byRecipe} richViz={richViz} />
-          : <BatchList batches={batches} />}
-      </Box>
+    // DS Drawer header only takes a string title (it renders its own close
+    // button), so the subtitle opens the body instead.
+    <Drawer side="right" open={open} onClose={onClose} title={title} className="max-w-[30rem]">
+      {subtitle && <p className="-mt-1 mb-4 text-sm text-text-muted">{subtitle}</p>}
+      {kind === 'kpi'
+        ? <KpiDetail kpi={kpi} daily={daily} byMachine={byMachine} byRecipe={byRecipe} richViz={richViz} />
+        : <BatchList batches={batches} />}
     </Drawer>
   )
 }
@@ -258,8 +241,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function StatusPill({ status }: { status: string }) {
-  const color: 'error' | 'primary' | 'default' =
-    status === 'Cancelled' ? 'error' : status.startsWith('Completed') ? 'primary' : 'default'
-  return <Chip label={status} size="small" color={color} variant={color === 'default' ? 'filled' : 'outlined'}
-    sx={{ height: 22, fontSize: '0.6875rem', fontWeight: 500 }} />
+  const variant: 'danger' | 'accent' | 'neutral' =
+    status === 'Cancelled' ? 'danger' : status.startsWith('Completed') ? 'accent' : 'neutral'
+  return <Badge variant={variant} size="sm">{status}</Badge>
 }

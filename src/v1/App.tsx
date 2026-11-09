@@ -1,7 +1,7 @@
 'use client'
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  BATCH BOOK v1 (and v0) — Tailwind app · ENTRY POINT
+//  PERFORMANCE TRACKING v1 (and v0) — Tailwind app · ENTRY POINT
 // ═══════════════════════════════════════════════════════════════════════════
 //  Mounted by app/(app)/batch-book/page.tsx, client-only.
 //

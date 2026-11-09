@@ -22,7 +22,7 @@ const MIME = { html: "text/html", js: "text/javascript", mjs: "text/javascript",
 const args = process.argv.slice(2);
 const labelIdx = args.indexOf("--label");
 const ci = process.env.GITHUB_ACTIONS === "true";
-// Na Action, a mensagem do commit chega por env (MIRA_LABEL), nunca interpolada no shell. Só a 1ª linha.
+// In the Action, the commit message arrives through env (MIRA_LABEL), never interpolated into the shell. First line only.
 const label = (labelIdx >= 0 ? args[labelIdx + 1] : process.env.MIRA_LABEL)?.split("\n")[0].trim().slice(0, 200) || undefined;
 
 async function readConfig(name, ...envNames) {
@@ -52,30 +52,33 @@ async function api(base, token, method, route, body, contentType) {
   return json;
 }
 
-/** Origem do build: remoto, commit, branch e se a árvore tinha mudança não commitada. Sem git, manda nada. */
+/** Where the build came from: remote, commit, branch and whether the tree had uncommitted changes. Without git, sends nothing. */
 function gitInfo() {
   const run = (...a) => { const r = spawnSync("git", a, { encoding: "utf8" }); return r.status === 0 ? r.stdout.trim() : null; };
   const sha = run("rev-parse", "HEAD");
   if (!sha) return {};
   if (ci) {
-    // No GitHub, o remoto do checkout leva credencial; monta a URL pública do repositório.
+    // On GitHub the checkout remote carries a credential; build the public repository URL instead.
     const remote = process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}` : null;
     return { gitSha: process.env.GITHUB_SHA || sha, gitBranch: process.env.GITHUB_REF_NAME || run("rev-parse", "--abbrev-ref", "HEAD"), gitRemote: remote, gitDirty: false };
   }
   return { gitSha: sha, gitBranch: run("rev-parse", "--abbrev-ref", "HEAD"), gitRemote: run("config", "--get", "remote.origin.url"), gitDirty: (run("status", "--porcelain") ?? "") !== "" };
 }
 
-/** Playwright do próprio projeto (devDependency); null se não estiver instalado. */
+/** The project's own Playwright (devDependency); null when it is not installed. */
 function loadPlaywright() {
   const req = createRequire(path.join(process.cwd(), "/"));
   for (const name of ["playwright", "playwright-core"]) {
-    try { return req(name); } catch { /* tenta o próximo */ }
+    try { return req(name); } catch { /* try the next one */ }
   }
   return null;
 }
 
-/** Servidor estático mínimo: o build responde no mesmo caminho em que vai morar no MIRA (basePath). */
-function serveDir(dir, prefix) {
+/**
+ * Minimal static server: the build answers on the same path it will live at in MIRA (basePath). `gateScript` (from
+ * MIRA, when the project has a prototype password) goes right after <head>, as MIRA does, so captures skip the gate.
+ */
+function serveDir(dir, prefix, gateScript) {
   const root = path.resolve(dir);
   const read = async (rel) => { try { const f = path.join(root, rel); if (!f.startsWith(root)) return null; const s = await stat(f); return s.isFile() ? { f, body: await readFile(f) } : null; } catch { return null; } };
   const server = createServer(async (req, res) => {
@@ -87,19 +90,25 @@ function serveDir(dir, prefix) {
     for (const t of [...tries, "/404.html", "/index.html"]) { hit = await read(t); if (hit) break; }
     if (!hit) { res.writeHead(404).end(); return; }
     const ext = hit.f.split(".").pop().toLowerCase();
-    res.writeHead(200, { "content-type": MIME[ext] ?? "application/octet-stream" }).end(hit.body);
+    let body = hit.body;
+    if (gateScript && ext === "html") {
+      const html = body.toString("utf8");
+      const m = /<head\b[^>]*>/i.exec(html) ?? /<html\b[^>]*>/i.exec(html);
+      body = m ? html.slice(0, m.index + m[0].length) + gateScript + html.slice(m.index + m[0].length) : gateScript + html;
+    }
+    res.writeHead(200, { "content-type": MIME[ext] ?? "application/octet-stream" }).end(body);
   });
   return new Promise((ok) => server.listen(0, "127.0.0.1", () => ok({ url: `http://127.0.0.1:${server.address().port}`, close: () => server.close() })));
 }
 
-/** Depois de publicar: captura as rotas de mira.json "screens" em cada viewport e envia ao MIRA. Falha aqui não derruba a versão. */
+/** After publishing: captures the mira.json "screens" routes at each viewport and sends them to MIRA. A failure here does not undo the version. */
 async function captureScreens(cfg, base, token, v) {
   const routes = Array.isArray(cfg.screens) ? cfg.screens.filter((r) => typeof r === "string" && r.startsWith("/")) : [];
   if (!routes.length) return;
   const pw = loadPlaywright();
   if (!pw) { console.log("→ screens skipped: install Playwright to enable them (npm i -D playwright && npx playwright install chromium)"); return; }
   const viewports = (Array.isArray(cfg.viewports) && cfg.viewports.length ? cfg.viewports : ["1440x900"]).filter((x) => /^\d{3,4}x\d{3,4}$/.test(x));
-  const srv = await serveDir(cfg.dir, v.basePath);
+  const srv = await serveDir(cfg.dir, v.basePath, v.gateScript);
   let browser;
   let sent = 0;
   try {
@@ -172,7 +181,7 @@ async function main() {
   await Promise.all(Array.from({ length: 6 }, worker));
   process.stdout.write("\n");
 
-  // Qualquer falha cancela a versão na hora (senão ela fica "uploading" até a limpeza diária).
+  // Any failure cancels the version right away (otherwise it stays "uploading" until the daily cleanup).
   const cancel = () => api(base, token, "POST", `/api/cli/versions/${v.versionId}/fail`).catch(() => {});
   if (failed) { await cancel(); throw new Error(`upload failed, publish canceled. ${failed.message}`); }
   if (tooBig.length) {
