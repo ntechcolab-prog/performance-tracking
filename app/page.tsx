@@ -100,7 +100,7 @@ export default function HomePage() {
       )}
       <form onSubmit={submit} className="w-full max-w-sm rounded-2xl border border-line/70 bg-card p-8 shadow-card">
         <h1 className="mb-1 text-lg font-semibold text-ink">Sign in</h1>
-        <p className="mb-6 text-sm text-muted">Batch Book · Notify / IRIS Cloud</p>
+        <p className="mb-6 text-sm text-muted">Performance Tracking · Notify / IRIS Cloud</p>
 
         <label className="mb-1.5 block text-xs font-medium text-muted" htmlFor="login">
           Login

@@ -462,7 +462,7 @@ interface Product {
 
 const PRODUCTS: Product[] = [
   {
-    name: 'Batch Book',
+    name: 'Performance Tracking',
     desc: 'Batch reports & analytics',
     href: '#',
     color: '#46aa9f',
@@ -470,7 +470,7 @@ const PRODUCTS: Product[] = [
     glyph: BATCH_BOOK_GLYPH,
   },
   {
-    name: 'Batch Book v0',
+    name: 'Performance Tracking v0',
     desc: 'Registry only',
     href: '/batch-book?v=0',
     color: '#6ca8c9',
@@ -478,7 +478,7 @@ const PRODUCTS: Product[] = [
     glyph: BATCH_BOOK_GLYPH,
   },
   {
-    name: 'Batch Book v1',
+    name: 'Performance Tracking v1',
     desc: 'Full access',
     href: '/batch-book?v=1',
     color: '#5b97b8',
@@ -486,7 +486,7 @@ const PRODUCTS: Product[] = [
     glyph: BATCH_BOOK_GLYPH,
   },
   {
-    name: 'Batch Book v2',
+    name: 'Performance Tracking v2',
     desc: 'Material UI rebuild',
     href: '/batch-book-v2?v=2',
     color: '#008d84',

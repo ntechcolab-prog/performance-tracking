@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 
-// Digital Reports / Batch Book design tokens (from app/globals.css @theme).
+// Digital Reports / Performance Tracking design tokens (from app/globals.css @theme).
 // Painted with literal hex so the swatches never depend on a Tailwind utility
 // being generated for a given token.
 const GROUPS: { title: string; tokens: { name: string; value: string; ink?: boolean }[] }[] = [
@@ -80,7 +80,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The Batch Book color tokens defined in `app/globals.css` (@theme) — surfaces, brand teal, text, status, and the chart palette.',
+          'The Performance Tracking color tokens defined in `app/globals.css` (@theme) — surfaces, brand teal, text, status, and the chart palette.',
       },
     },
   },

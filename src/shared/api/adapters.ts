@@ -126,7 +126,7 @@ export function batchRecordToBatch(r: BatchRecord): Batch {
 // --- OEE from real production metrics -----------------------------------
 
 /** Compute OEE for a production-metrics window using real machine data plus the
- *  business targets the Batch Book owns client-side (planned time, ideal rate).
+ *  business targets the Performance Tracking owns client-side (planned time, ideal rate).
  *  actualRate defaults to produced size ÷ run time when not supplied. */
 export function oeeFromProduction(
   pm: ProductionMetrics,

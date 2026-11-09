@@ -1,6 +1,6 @@
 'use client'
 
-// The DESIGNED Batch Book dashboard KPI grid (MUI), fed with REAL data.
+// The DESIGNED Performance Tracking dashboard KPI grid (MUI), fed with REAL data.
 // Secondary path — the mock dashboard at /batch-book-v2 is untouched.
 
 import { useEffect, useState } from 'react'

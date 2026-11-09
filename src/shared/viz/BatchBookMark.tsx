@@ -1,8 +1,8 @@
 // ─── SHARED (v1 + v2) ────────────────────────────────────────────────────────
-// The Batch Book brand mark. Worn by both chromes: v1 AppHeader and v2 TopBarV2.
+// The Performance Tracking brand mark. Worn by both chromes: v1 AppHeader and v2 TopBarV2.
 // ⚠ Changing this affects BOTH versions of the app.
 // ─────────────────────────────────────────────────────────────────────────────
-// Batch Book brand mark — "Entry": the bound spine plus the lines of a record.
+// Performance Tracking brand mark — "Entry": the bound spine plus the lines of a record.
 // Built on the IRIS Cloud logo grid (64 box, tile radius 14.6% of the side,
 // drawing centred in ~60% of the tile) so it sits next to IRIS Cloud and
 // Production Monitoring as part of the same family.
@@ -42,7 +42,7 @@ export function BatchBookMark({
       viewBox="0 0 64 64"
       className={className}
       role="img"
-      aria-label="Batch Book"
+      aria-label="Performance Tracking"
     >
       <rect width="64" height="64" rx="9.5" fill={tile} />
       <BatchBookGlyph fg={fg} />

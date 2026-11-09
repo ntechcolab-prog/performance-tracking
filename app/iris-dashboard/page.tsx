@@ -1,6 +1,6 @@
 'use client'
 
-// Secondary path: the designed Batch Book dashboard (MUI) with real data.
+// Secondary path: the designed Performance Tracking dashboard (MUI) with real data.
 // Client-only (localStorage auth, ECharts, window layout), wrapped in MuiProvider
 // like /batch-book-v2. IRIS-gated (exempt from the legacy cookie gate).
 

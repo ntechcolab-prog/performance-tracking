@@ -40,7 +40,7 @@ export default function App() {
   const [activeNav, setActiveNav] = useState(() => initialScreen(restricted, 'dashboard', SCREENS))
 
   // Branding (name + icon) — persisted; editable UI was removed with NameIdeas.
-  const [appName] = useLocalStorage<string>('dr-name-current', 'Batch Book')
+  const [appName] = useLocalStorage<string>('dr-name-current', 'Performance Tracking')
   const [appIcon] = useLocalStorage<string | null>('dr-app-icon', null)
 
   const gated = isScreenGated(activeNav, restricted)

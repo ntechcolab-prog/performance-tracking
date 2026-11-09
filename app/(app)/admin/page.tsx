@@ -34,7 +34,7 @@ export default async function AdminPage() {
       <div className="px-10 py-10">
         <h1 className="text-2xl font-bold text-[#33333a]">Registered users</h1>
         <p className="mt-1 text-[#6b6b73]">
-          {rows.length} {rows.length === 1 ? 'account' : 'accounts'} testing Batch Book
+          {rows.length} {rows.length === 1 ? 'account' : 'accounts'} testing Performance Tracking
         </p>
 
         <div className="mt-6 overflow-hidden rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] ring-1 ring-black/5">

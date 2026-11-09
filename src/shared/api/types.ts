@@ -1,6 +1,6 @@
 // TypeScript mirrors of the REAL Notify / IRIS Cloud `api` contracts (customer
 // public API). Field names match the backend's JSON tags exactly — these are the
-// names the Batch Book must adapt its (invented) mock shapes to.
+// names the Performance Tracking must adapt its (invented) mock shapes to.
 //
 // Source of truth: get-notify/api → models/public/notify_api.gen.go and the
 // customer app's src/model + src/types interfaces.

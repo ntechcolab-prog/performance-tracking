@@ -10,7 +10,7 @@ const roboto = Roboto({
 })
 
 export const metadata: Metadata = {
-  title: 'Batch Book — Dashboard',
+  title: 'Performance Tracking — Dashboard',
   icons: { icon: '/favicon.svg', apple: '/apple-touch-icon.png' },
 }
 

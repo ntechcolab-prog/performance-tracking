@@ -25,7 +25,7 @@ export default function IrisNav() {
 
   return (
     <nav className="mb-6 flex flex-wrap items-center gap-1 border-b border-line/60 pb-3">
-      <span className="mr-2 text-sm font-bold text-ink">Batch Book</span>
+      <span className="mr-2 text-sm font-bold text-ink">Performance Tracking</span>
       {LINKS.map((l) => {
         const active = pathname === l.href || pathname.startsWith(l.href + '/')
         return (

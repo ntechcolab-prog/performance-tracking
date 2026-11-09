@@ -32,7 +32,7 @@ for (const d of drop) rmSync(path.join(work, d), { recursive: true, force: true 
 // below BASE_PATH (next/image and <Link> handle that themselves, raw src= does not).
 const base = process.env.BASE_PATH ?? ''
 // Reviewed inside IRIS Cloud as Performance Tracking: tab title and icon follow the IRIS Cloud mark,
-// not the Batch Book one (which stays on the real deploy).
+// not the Performance Tracking one (which stays on the real deploy).
 const layoutFile = path.join(work, 'app/layout.tsx')
 writeFileSync(layoutFile, readFileSync(layoutFile, 'utf8')
   .replace(/title: '[^']*'/, "title: 'Performance Tracking · IRIS Cloud'")

@@ -1,6 +1,6 @@
-# Batch Book ↔ Notify / IRIS integration — notes
+# Performance Tracking ↔ Notify / IRIS integration — notes
 
-Status of wiring the (formerly mock) Batch Book to the real Go backend. All new
+Status of wiring the (formerly mock) Performance Tracking to the real Go backend. All new
 code is additive; existing screens still run on mocks until migrated via the
 `src/shared/data/dataSource.ts` seam.
 

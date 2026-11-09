@@ -1,5 +1,5 @@
 // Sensor metrics — get-notify/api customer surface. These feed the process
-// telemetry the Batch Book currently fakes (mill speed, temps, flows, pressures).
+// telemetry the Performance Tracking currently fakes (mill speed, temps, flows, pressures).
 //
 //   GET /v1/metrics/last?machine_id=&metrics=
 //   GET /v1/metrics/history/chart-data?machine_id=&from=&to=&metrics=

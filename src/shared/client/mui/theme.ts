@@ -3,6 +3,7 @@
 import { createTheme, alpha } from '@mui/material/styles'
 import type { Shadows } from '@mui/material/styles'
 
+// Values aligned with the Techco.lab DS (src/ds/tokens.css) on 2026-11-09.
 // IRIS / Digital Reports design tokens, mapped from app/globals.css @theme so the
 // MUI v2 app reads as the same product as the Tailwind v0/v1 versions — not
 // "Material out of the box". Keep these in sync with the CSS tokens.
@@ -12,20 +13,20 @@ const tokens = {
   page: '#f6f6f6',
   card: '#ffffff',
 
-  primary: '#46aa9f',
-  primary700: '#008d84',
+  primary: '#007167', // DS accent
+  primary700: '#005f57', // DS accent-hover
   primarySoft: '#e2f0ed',
 
-  ink: '#33343c',
-  inkSoft: '#4c4d57',
-  muted: '#8d9094',
+  ink: '#4c4d57', // DS text
+  inkSoft: '#5c5f62', // DS text-muted
+  muted: '#7d7f84', // DS text-subtle
   faint: '#c3c5c7',
-  line: '#e7e8ea',
+  line: '#e8e8e8', // DS border
   lineSoft: '#f0f1f2',
 
-  up: '#1aa367',
+  up: '#007167', // DS success
   down: '#c12907',
-  warning: '#f19909',
+  warning: '#e7b547', // DS warning
 
   irisBlue: '#6ca8c9',
   irisBlue700: '#5b97b8',
@@ -65,10 +66,10 @@ const theme = createTheme({
     text: { primary: tokens.ink, secondary: tokens.muted, disabled: tokens.faint },
     divider: tokens.line,
   },
-  shape: { borderRadius: 9 },
+  shape: { borderRadius: 8 },
   shadows,
   typography: {
-    fontFamily: 'var(--font-roboto), Roboto, ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif', // Techco.lab DS --font-sans
     // Hierarchy through scale + weight contrast, tighter than Material default.
     h4: { fontWeight: 700, fontSize: '1.5rem', letterSpacing: '-0.01em', lineHeight: 1.2 },
     h5: { fontWeight: 700, fontSize: '1.25rem', letterSpacing: '-0.01em', lineHeight: 1.25 },

@@ -10,7 +10,7 @@
 //
 // The only inputs that are NOT machine data are the business TARGETS (planned
 // production time and per-recipe ideal rate). Those are client-side config the
-// Batch Book already owns (the shift plan works this way) — they are passed in
+// Performance Tracking already owns (the shift plan works this way) — they are passed in
 // as explicit parameters here, never invented.
 //
 // All ratios are returned in 0..1. Use `toPct` for display.

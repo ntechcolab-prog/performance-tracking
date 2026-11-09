@@ -1,0 +1,237 @@
+/* Techco.lab Design System tokens, copied from ~/Projects/NETZSCH/techcolab-ds/src/index.css.
+   Tokens that would override names Performance Tracking v1 already uses (font, warning,
+   radius-sm/lg, shadows, easings) are scoped to .tcl-ds, the v2 root, so v1 keeps its look. */
+@theme {
+
+  /* PRIMITIVE · Green (brand anchor #007167 at green-100) */
+  --color-green-10: #e2f0ed;
+  --color-green-20: #c4e2dd;
+  --color-green-30: #a8d4ce;
+  --color-green-40: #8ac6bd;
+  --color-green-50: #6bb7b0;
+  --color-green-60: #46aa9f;
+  --color-green-70: #239b92; /* interpolated — official ramp omits 70 */
+  --color-green-80: #008d84;
+  --color-green-90: #007f74;
+  --color-green-100: #007167;
+  --color-green-a10: #0071671a;
+  --color-green-a20: #00716733;
+  --color-green-a30: #0071674d;
+  --color-green-a40: #00716766;
+  --color-green-a50: #00716780;
+  --color-green-a60: #00716799;
+  --color-green-a70: #007167b2;
+  --color-green-a80: #007167cc;
+  --color-green-a90: #007167e5;
+  --color-green-a100: #007167;
+
+  /* PRIMITIVE · Anthracite (anchor #4c4d57) */
+  --color-anthracite-10: #eaeaea;
+  --color-anthracite-20: #d7d9db;
+  --color-anthracite-30: #c3c5c7;
+  --color-anthracite-40: #b1b4b7;
+  --color-anthracite-50: #9fa1a4;
+  --color-anthracite-60: #8d9094;
+  --color-anthracite-70: #7d7f84;
+  --color-anthracite-80: #6b6e73;
+  --color-anthracite-90: #5c5f62;
+  --color-anthracite-100: #4c4d57;
+  --color-anthracite-a10: #4c4d571a;
+  --color-anthracite-a20: #4c4d5733;
+  --color-anthracite-a30: #4c4d574d;
+  --color-anthracite-a40: #4c4d5766;
+  --color-anthracite-a50: #4c4d5780;
+  --color-anthracite-a60: #4c4d5799;
+  --color-anthracite-a70: #4c4d57b2;
+  --color-anthracite-a80: #4c4d57cc;
+  --color-anthracite-a90: #4c4d57e5;
+  --color-anthracite-a100: #4c4d57;
+
+  /* PRIMITIVE · Blue Gray (anchor #7f868e) */
+  --color-bluegray-10: #eff1f3;
+  --color-bluegray-20: #e2e5e6;
+  --color-bluegray-30: #d5d8db;
+  --color-bluegray-40: #cacdd0;
+  --color-bluegray-50: #bbc0c4;
+  --color-bluegray-60: #adb5b6;
+  --color-bluegray-70: #a2a6ac;
+  --color-bluegray-80: #969da2;
+  --color-bluegray-90: #8a9196;
+  --color-bluegray-100: #7f868e;
+  --color-bluegray-a10: #7f868e1a;
+  --color-bluegray-a20: #7f868e33;
+  --color-bluegray-a30: #7f868e4d;
+  --color-bluegray-a40: #7f868e66;
+  --color-bluegray-a50: #7f868e80;
+  --color-bluegray-a60: #7f868e99;
+  --color-bluegray-a70: #7f868eb2;
+  --color-bluegray-a80: #7f868ecc;
+  --color-bluegray-a90: #7f868ee5;
+  --color-bluegray-a100: #7f868e;
+
+  /* PRIMITIVE · Gray (anchor #b2b5b8) */
+  --color-gray-10: #f6f6f6;
+  --color-gray-20: #efefef;
+  --color-gray-30: #e8e8e8;
+  --color-gray-40: #dee0e0;
+  --color-gray-50: #d6d8d7;
+  --color-gray-60: #cfd1d0;
+  --color-gray-70: #c7c9c8;
+  --color-gray-80: #bfc1c0;
+  --color-gray-90: #b8bab9;
+  --color-gray-100: #b2b5b8;
+  --color-gray-a10: #b2b5b81a;
+  --color-gray-a20: #b2b5b833;
+  --color-gray-a30: #b2b5b84d;
+  --color-gray-a40: #b2b5b866;
+  --color-gray-a50: #b2b5b880;
+  --color-gray-a60: #b2b5b899;
+  --color-gray-a70: #b2b5b8b2;
+  --color-gray-a80: #b2b5b8cc;
+  --color-gray-a90: #b2b5b8e5;
+  --color-gray-a100: #b2b5b8;
+
+  /* PRIMITIVE · Yellow / warning (anchor #dba338) */
+  --color-yellow-10: #fcf5e7;
+  --color-yellow-20: #fcead2;
+  --color-yellow-30: #fbe5be;
+  --color-yellow-40: #f9ddaa;
+  --color-yellow-50: #f6d496;
+  --color-yellow-60: #f3cc82;
+  --color-yellow-70: #efc26d;
+  --color-yellow-80: #ebbb5b;
+  --color-yellow-90: #e7b547;
+  --color-yellow-100: #dba338;
+  --color-yellow-a10: #dba3381a;
+  --color-yellow-a20: #dba33833;
+  --color-yellow-a30: #dba3384d;
+  --color-yellow-a40: #dba33866;
+  --color-yellow-a50: #dba33880;
+  --color-yellow-a60: #dba33899;
+  --color-yellow-a70: #dba338b2;
+  --color-yellow-a80: #dba338cc;
+  --color-yellow-a90: #dba338e5;
+  --color-yellow-a100: #dba338;
+
+  /* PRIMITIVE · Tec Blue / info (anchor #4e98aa) */
+  --color-tecblue-10: #ecf3f7;
+  --color-tecblue-20: #dde9ee;
+  --color-tecblue-30: #cbdee6;
+  --color-tecblue-40: #bdd3df;
+  --color-tecblue-50: #acc8d8;
+  --color-tecblue-60: #9bbed0;
+  --color-tecblue-70: #8cb4c7;
+  --color-tecblue-80: #7aaac0;
+  --color-tecblue-90: #689fb8;
+  --color-tecblue-100: #4e98aa;
+  --color-tecblue-a10: #4e98aa1a;
+  --color-tecblue-a20: #4e98aa33;
+  --color-tecblue-a30: #4e98aa4d;
+  --color-tecblue-a40: #4e98aa66;
+  --color-tecblue-a50: #4e98aa80;
+  --color-tecblue-a60: #4e98aa99;
+  --color-tecblue-a70: #4e98aab2;
+  --color-tecblue-a80: #4e98aacc;
+  --color-tecblue-a90: #4e98aae5;
+  --color-tecblue-a100: #4e98aa;
+
+  /* PRIMITIVE · Violet (anchor #51476d) */
+  --color-violet-10: #edebf0;
+  --color-violet-20: #ddd8e2;
+  --color-violet-30: #ccc6d3;
+  --color-violet-40: #bcb3c6;
+  --color-violet-50: #aaa3b8;
+  --color-violet-60: #9c90aa;
+  --color-violet-70: #8c7f9f;
+  --color-violet-80: #7c6c8f;
+  --color-violet-90: #6d5d82;
+  --color-violet-100: #51476d;
+  --color-violet-a10: #51476d1a;
+  --color-violet-a20: #51476d33;
+  --color-violet-a30: #51476d4d;
+  --color-violet-a40: #51476d66;
+  --color-violet-a50: #51476d80;
+  --color-violet-a60: #51476d99;
+  --color-violet-a70: #51476db2;
+  --color-violet-a80: #51476dcc;
+  --color-violet-a90: #51476de5;
+  --color-violet-a100: #51476d;
+
+  /* PRIMITIVE · Red / danger (anchor #c12907) */
+  --color-red-10: #f9eae6;
+  --color-red-20: #f3d4cd;
+  --color-red-30: #ecbfb5;
+  --color-red-40: #e6a99c;
+  --color-red-50: #e09483;
+  --color-red-60: #da7f6a;
+  --color-red-70: #d46951;
+  --color-red-80: #cd5439;
+  --color-red-90: #c73e20;
+  --color-red-100: #c12907;
+  --color-red-a10: #c129071a;
+  --color-red-a20: #c1290733;
+  --color-red-a30: #c129074d;
+  --color-red-a40: #c1290766;
+  --color-red-a50: #c1290780;
+  --color-red-a60: #c1290799;
+  --color-red-a70: #c12907b2;
+  --color-red-a80: #c12907cc;
+  --color-red-a90: #c12907e5;
+  --color-red-a100: #c12907;
+
+  --color-fullwhite: #ffffff;
+
+  /* LAYER 2 · SEMANTIC TOKENS (light) — built only from the primitives above */
+  --color-surface: #f6f6f6;            /* gray-10 · app background */
+  --color-surface-raised: #ffffff;     /* cards, sheets, menus (lifted by shadow) */
+  --color-surface-sunken: #efefef;     /* gray-20 · wells, insets, code blocks */
+  --color-text: #4c4d57;               /* anthracite-100 · primary text (8.4:1) */
+  --color-text-muted: #5c5f62;         /* anthracite-90 · secondary text (AA on sunken) */
+  --color-text-subtle: #7d7f84;        /* anthracite-70 · hints, captions */
+  --color-border: #e8e8e8;             /* gray-30 · default dividers / outlines */
+  --color-border-strong: #b2b5b8;      /* gray-100 · emphasis borders, inputs */
+  --color-accent: #007167;             /* green-100 · primary action / brand */
+  --color-accent-hover: #005f57;       /* green-100 darkened ~12% (no darker step in palette) */
+  --color-accent-subtle: #e2f0ed;      /* green-10 · accent backgrounds, tints */
+  --color-on-accent: #ffffff;          /* white text on accent (5.9:1) */
+  --color-on-danger: #ffffff;
+  --color-on-warning: #4c4d57;         /* dark text on light warning fill */
+  --color-success: #007167;            /* green-100 */
+  --color-success-subtle: #e2f0ed;     /* green-10 */
+  --color-warning-subtle: #fcf5e7;     /* yellow-10 */
+  --color-danger: #c12907;             /* red-100 · error / destructive (5.1:1 on sunken) */
+  --color-danger-subtle: #f9eae6;      /* red-10 */
+  --color-info: #4e98aa;               /* tecblue-100 */
+  --color-info-subtle: #ecf3f7;        /* tecblue-10 */
+  --color-focus: #007167;              /* green-100 · focus ring */
+
+  /* RADIUS */
+  --radius-card: 8px;
+  --radius-round: 9999px;
+
+  /* ELEVATION */
+
+  /* MOTION */
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+  --duration-slow: 360ms;
+
+  /* TYPOGRAPHY */
+}
+
+.tcl-ds,
+body:has(.tcl-ds) {
+  --color-warning: #e7b547;            /* yellow-90 */
+  --radius-sm: 4px;
+  --radius-lg: 12px;
+  --shadow-xs: 0 1px 2px rgba(42,42,42,0.04);
+  --shadow-sm: 0 1px 3px rgba(42,42,42,0.06), 0 1px 2px rgba(42,42,42,0.04);
+  --shadow-md: 0 4px 8px rgba(42,42,42,0.08), 0 2px 4px rgba(42,42,42,0.04);
+  --shadow-lg: 0 10px 20px rgba(42,42,42,0.10), 0 4px 8px rgba(42,42,42,0.05);
+  --shadow-xl: 0 20px 32px rgba(42,42,42,0.12), 0 10px 16px rgba(42,42,42,0.06);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+}

@@ -51,7 +51,7 @@ export default function AppV2({ root }: Props) {
   const gated = isScreenGated(route.screen, restricted)
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <Box className="tcl-ds" sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <TopBarV2 />
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <SidebarV2

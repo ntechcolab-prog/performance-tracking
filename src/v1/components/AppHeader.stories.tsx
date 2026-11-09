@@ -14,7 +14,7 @@ const meta = {
     },
   },
   args: {
-    name: 'Batch Book',
+    name: 'Performance Tracking',
     icon: null,
     restricted: false,
   },

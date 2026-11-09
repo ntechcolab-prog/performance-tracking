@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '../src/ds/tokens.css';
 
 @theme {
   --font-sans: var(--font-roboto), 'Roboto', ui-sans-serif, system-ui, sans-serif;
