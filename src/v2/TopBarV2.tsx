@@ -2,23 +2,19 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import AppBar from '@mui/material/AppBar'
-import Toolbar from '@mui/material/Toolbar'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 import { Avatar } from '@/src/ds/components/Avatar'
 import { IconButton } from '@/src/ds/components/IconButton'
 import { Menu, type MenuItem } from '@/src/ds/components/Menu'
-import { Tooltip } from '@/src/ds/components/Tooltip'
+import { TopBar, topBarOnDark } from '@/src/ds/components/TopBar'
 import AppsIcon from '@mui/icons-material/Apps'
 import MenuIcon from '@mui/icons-material/Menu'
 import { BatchBookMark } from '@/src/shared/viz/BatchBookMark'
 import { useSession } from '@/src/shared/client/Session'
-import { iris } from '@/src/shared/client/mui/theme'
 import { isLiveMode } from '@/src/shared/data/mockData'
 import { logout as irisLogout } from '@/src/shared/api/auth'
 
-// MUI counterpart of IrisTopBar — same IRIS Cloud chrome, dark #41414a bar.
+// DS TopBar with the IRIS Cloud chrome — the bar keeps the IRIS #41414a (darker
+// than the DS anthracite), same as IrisTopBar.
 export default function TopBarV2() {
   const user = useSession()
   const router = useRouter()
@@ -39,45 +35,45 @@ export default function TopBarV2() {
     router.refresh()
   }
 
-  // DS Menu only takes plain items: link entries navigate via the router; the
-  // user name / company header moved to a tooltip on the avatar.
+  // Link entries navigate via the router; the signed-in user + company sit in the menu header.
   const menuItems: MenuItem[] = [
     ...(!live ? [{ label: 'Production Monitoring', onSelect: () => router.push('/batch-book') }] : []),
     ...(user.isAdmin ? [{ label: 'Admin · Users', onSelect: () => router.push('/admin') }] : []),
     { label: 'Log out', danger: true, divider: true, onSelect: () => { void logout() } },
   ]
-  const onDark = 'text-fullwhite hover:bg-fullwhite/10 hover:text-fullwhite'
-
-  const row = { display: 'flex', alignItems: 'center' } as const
 
   return (
-    <AppBar position="static" elevation={0} sx={{ bgcolor: iris.irisTopbar }}>
-      <Toolbar sx={{ minHeight: 64, px: 3, justifyContent: 'space-between' }}>
-        <Box sx={{ ...row, gap: 2.5 }}>
+    <TopBar
+      className="bg-[#41414a] sm:px-6"
+      start={
+        <>
           <IconButton icon={<AppsIcon />} variant="ghost" aria-label="Applications"
-            onClick={() => router.push(home)} className={onDark} />
-          <Box component={Link} href={home} aria-label="Home" sx={{ ...row, textDecoration: 'none', color: '#fff' }}>
-            <Box sx={{ ...row, gap: 1.25 }}>
-              <BatchBookMark size={30} />
-              <Typography sx={{ fontSize: '1.05rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
-                Performance&nbsp;Tracking
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-
-        <Box sx={{ ...row, gap: 2.5 }}>
-          <Box component={Link} href={home} sx={{ ...row, gap: 1.25, color: '#fff', textDecoration: 'none' }}>
-            <Typography sx={{ fontSize: '0.95rem', fontWeight: 500 }}>Hello,</Typography>
-            <Tooltip content={`${user.name} · ${user.company.name}`} side="bottom">
-              <span><Avatar name={user.name} size="sm" className="ring-0" /></span>
-            </Tooltip>
-          </Box>
-
-          <Menu align="end" items={menuItems}
-            trigger={<IconButton icon={<MenuIcon />} variant="ghost" aria-label="Menu" className={onDark} />} />
-        </Box>
-      </Toolbar>
-    </AppBar>
+            onClick={() => router.push(home)} className={topBarOnDark} />
+          <Link href={home} aria-label="Home" className="flex items-center gap-2.5 text-fullwhite no-underline">
+            <BatchBookMark size={30} />
+            <span className="text-[1.05rem] font-bold tracking-[-0.01em]">Performance&nbsp;Tracking</span>
+          </Link>
+        </>
+      }
+      end={
+        <>
+          <Link href={home} className="flex items-center gap-2.5 text-fullwhite no-underline">
+            <span className="text-[0.95rem] font-medium">Hello,</span>
+            <Avatar name={user.name} size="sm" className="ring-0" />
+          </Link>
+          <Menu
+            align="end"
+            items={menuItems}
+            header={
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-text">{user.name}</span>
+                <span className="text-xs text-text-muted">{user.company.name}</span>
+              </div>
+            }
+            trigger={<IconButton icon={<MenuIcon />} variant="ghost" aria-label="Menu" className={topBarOnDark} />}
+          />
+        </>
+      }
+    />
   )
 }

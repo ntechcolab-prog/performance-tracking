@@ -223,31 +223,55 @@ function AvailabilityRankingBoard({ goal }: { goal: number }) {
 
   const machines = rows.map((r) => r.machine)
   const rankingOption: EChartsOption = {
-    grid: { left: 4, right: 8, top: 24, bottom: 4, containLabel: true },
-    tooltip: { trigger: 'axis', valueFormatter: (v) => (v == null ? '' : `${v as number}%`) },
-    xAxis: { type: 'category', data: machines },
-    yAxis: { type: 'value', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
-    series: [{
-      type: 'bar',
-      data: rows.map((r) => ({
-        value: r.pct,
-        itemStyle: {
-          color: r.pct < goal ? iris.warning : iris.primary,
-          borderRadius: [2, 2, 0, 0],
-        },
-      })),
-      markLine: {
-        silent: true,
-        symbol: 'none',
-        data: [{ yAxis: goal }],
-        lineStyle: { color: iris.primary, type: 'dashed', width: 1 },
-        label: { formatter: `Goal ${goal}%`, position: 'insideEndTop', color: iris.primary, fontSize: 10 },
+    grid: { left: 0, right: 0, top: 24, bottom: 4, containLabel: true },
+    // No axisPointer: the default vertical hover line read as a stray line
+    // (MIRA review). The tooltip alone identifies the hovered machine.
+    tooltip: { trigger: 'axis', axisPointer: { type: 'none' }, valueFormatter: (v) => (v == null ? '' : `${v as number}%`) },
+    xAxis: { type: 'category', data: machines, splitLine: { show: false } },
+    yAxis: { type: 'value', min: 0, max: 100, axisLine: { show: false }, axisLabel: { formatter: '{value}%' } },
+    series: [
+      {
+        type: 'bar',
+        z: 2,
+        data: rows.map((r) => ({
+          value: r.pct,
+          itemStyle: {
+            color: r.pct < goal ? iris.warning : iris.primary,
+            borderRadius: [2, 2, 0, 0],
+          },
+        })),
       },
-    }],
+      // Goal lives on its own empty series with a higher z so the dashed line
+      // and its label render OVER the bars, never behind them.
+      {
+        type: 'line',
+        z: 10,
+        data: [],
+        silent: true,
+        tooltip: { show: false },
+        markLine: {
+          silent: true,
+          symbol: 'none',
+          animation: false,
+          data: [{ yAxis: goal }],
+          lineStyle: { color: iris.ink, type: 'dashed', width: 1.5 },
+          label: {
+            formatter: `Goal ${goal}%`,
+            position: 'insideEndTop',
+            color: iris.ink,
+            fontSize: 11,
+            fontWeight: 600,
+            backgroundColor: '#fff',
+            borderRadius: 4,
+            padding: [2, 6],
+          },
+        },
+      },
+    ],
   }
 
   return (
-    <Card className="p-5">
+    <Card className="p-4">
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
         <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'text.primary' }}>
@@ -428,7 +452,10 @@ export default function MachineTabV2() {
   const yearType = typeFor('year')
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+    // Inset matches the Batches tab card (FiltersV2: px 3 / py 2.5) so the
+    // ranking board, the selects row and the card grid share one left/right
+    // edge instead of the ranking card sitting flush on the outer card border.
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, px: 3, py: 2.5 }}>
       {/* attack-focus ranking — worst performers first */}
       <AvailabilityRankingBoard goal={goal} />
 
@@ -519,6 +546,7 @@ export default function MachineTabV2() {
               {/* No visible label: the DS Select puts its label above the
                   trigger, which would break the card header row. */}
               <Select
+                aria-label="Year"
                 className="min-w-[100px]"
                 value={String(viewYear)}
                 onChange={(v) => setViewYear(Number(v))}

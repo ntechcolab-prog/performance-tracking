@@ -113,17 +113,6 @@ export function withAlpha(hex: string, a: number): string {
   return `rgba(${r}, ${g}, ${b}, ${a})`
 }
 
-// Class names that mirror the DS <Table> look, for the tables the DS Table
-// cannot render (clickable rows, inline editors in header cells, colSpan rows).
-export const dsTable = {
-  wrap: 'overflow-x-auto rounded-card border border-border',
-  table: 'w-full border-collapse text-sm',
-  headRow: 'border-b border-border bg-surface-sunken',
-  th: 'px-4 py-3 text-left font-semibold text-text whitespace-nowrap',
-  row: 'border-b border-border last:border-0 odd:bg-surface-raised even:bg-surface transition-colors hover:bg-surface-sunken',
-  td: 'px-4 py-3 text-text',
-} as const
-
 // Compact DS text field for the inline row editors (fixed width, or full width).
 export const CellInput = forwardRef<HTMLInputElement, TextfieldProps & { width?: number }>(
   ({ width, ...rest }, ref) => (

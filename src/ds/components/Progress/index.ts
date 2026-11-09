@@ -1,2 +1,2 @@
 export { Progress } from './Progress'
-export type { ProgressProps } from './Progress'
+export type { ProgressProps, ProgressTone } from './Progress'

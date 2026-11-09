@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Check, ChevronDown, X } from 'lucide-react'
 import { cn } from '../../helpers/cn'
@@ -23,6 +23,17 @@ interface ComboboxBaseProps {
   onSearch?: (query: string) => void
   /** Shown when there are no options to display. Default `"No results"`. */
   emptyMessage?: string
+  /** Free-text mode. Typed text is kept as the value (single: emitted through
+   *  `onChange` as you type; an exact label match emits that option's value),
+   *  focusing an existing value does not clear it, and text that matches no
+   *  option is offered as a "Create" entry at the end of the list. */
+  creatable?: boolean
+  /** Label of the create entry. Default `Create "<text>"`. */
+  createLabel?: (text: string) => ReactNode
+  /** Fired when the create entry is picked, with the trimmed text. */
+  onCreate?: (text: string) => void
+  /** Accessible name when there is no visible `label`. */
+  'aria-label'?: string
   className?: string
 }
 
@@ -40,6 +51,9 @@ export interface ComboboxMultiProps extends ComboboxBaseProps {
 
 export type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps
 
+/** A rendered list entry: an option, or the synthetic "Create" entry. */
+type Item = ComboboxOption & { create?: boolean }
+
 export function Combobox(props: ComboboxProps) {
   const {
     options,
@@ -50,6 +64,10 @@ export function Combobox(props: ComboboxProps) {
     disabled,
     onSearch,
     emptyMessage = 'No results',
+    creatable = false,
+    createLabel,
+    onCreate,
+    'aria-label': ariaLabel,
     className,
   } = props
   const multiple = props.multiple === true
@@ -67,7 +85,12 @@ export function Combobox(props: ComboboxProps) {
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [activeIndex, setActiveIndex] = useState(0)
+  // True once the user typed since opening: until then the list is not filtered,
+  // so a creatable field that opens with its current text still shows every option.
+  const [typed, setTyped] = useState(false)
+  // Creatable fields start with nothing highlighted, so Enter keeps the typed text.
+  const firstActive = creatable ? -1 : 0
+  const [activeIndex, setActiveIndex] = useState(firstActive)
 
   const selectedValues: string[] = multiple
     ? ((props.value as string[] | undefined) ?? [])
@@ -79,17 +102,30 @@ export function Combobox(props: ComboboxProps) {
     ? options.find((o) => o.value === (props.value as string | null | undefined))
     : undefined
 
-  const filtered = useMemo(() => {
-    if (onSearch) return options
-    const q = query.trim().toLowerCase()
-    if (!q) return options
-    return options.filter((o) => o.label.toLowerCase().includes(q))
-  }, [options, query, onSearch])
+  // Text shown in a closed single field: the option label, or the free text.
+  const singleDisplay = !multiple
+    ? (singleSelected?.label ?? (creatable ? ((props.value as string | null | undefined) ?? '') : ''))
+    : ''
+
+  const filtered = useMemo<Item[]>(() => {
+    const q = typed ? query.trim().toLowerCase() : ''
+    const shown = onSearch || !q ? options : options.filter((o) => o.label.toLowerCase().includes(q))
+    const text = query.trim()
+    if (
+      creatable &&
+      typed &&
+      text &&
+      !options.some((o) => o.label.toLowerCase() === text.toLowerCase())
+    ) {
+      return [...shown, { label: text, value: text, create: true }]
+    }
+    return shown
+  }, [options, query, typed, onSearch, creatable])
 
   // Keep the active option in range as the list changes.
   useEffect(() => {
-    setActiveIndex((i) => Math.min(Math.max(i, 0), Math.max(filtered.length - 1, 0)))
-  }, [filtered.length])
+    setActiveIndex((i) => Math.min(Math.max(i, firstActive), Math.max(filtered.length - 1, firstActive)))
+  }, [filtered.length, firstActive])
 
   // Scroll the active option into view.
   useEffect(() => {
@@ -109,19 +145,30 @@ export function Combobox(props: ComboboxProps) {
 
   function openList() {
     if (disabled) return
+    if (!open) {
+      // A creatable single field keeps its text when it opens instead of clearing it.
+      setQuery(creatable && !multiple ? singleDisplay : '')
+      setTyped(false)
+    }
     setOpen(true)
-    setActiveIndex(0)
+    setActiveIndex(firstActive)
   }
 
   function emitSearch(q: string) {
     setQuery(q)
+    setTyped(true)
     if (!open) setOpen(true)
-    setActiveIndex(0)
+    setActiveIndex(firstActive)
     onSearch?.(q)
+    if (creatable && !multiple) {
+      const match = options.find((o) => o.label.toLowerCase() === q.trim().toLowerCase())
+      ;(props.onChange as ((v: string | null) => void) | undefined)?.(match ? match.value : q === '' ? null : q)
+    }
   }
 
-  function commit(option: ComboboxOption) {
+  function commit(option: Item) {
     if (option.disabled) return
+    if (option.create) onCreate?.(option.value)
     if (multiple) {
       const current = (props.value as string[] | undefined) ?? []
       const next = current.includes(option.value)
@@ -129,11 +176,12 @@ export function Combobox(props: ComboboxProps) {
         : [...current, option.value]
       ;(props.onChange as ((v: string[]) => void) | undefined)?.(next)
       setQuery('')
+      setTyped(false)
       onSearch?.('')
       inputRef.current?.focus()
     } else {
       ;(props.onChange as ((v: string | null) => void) | undefined)?.(option.value)
-      setQuery('')
+      setQuery(creatable ? option.label : '')
       setOpen(false)
       inputRef.current?.focus()
     }
@@ -180,6 +228,15 @@ export function Combobox(props: ComboboxProps) {
         break
       case 'Enter':
         if (open && filtered[activeIndex]) { e.preventDefault(); commit(filtered[activeIndex]) }
+        else if (open && creatable) {
+          // Nothing highlighted: keep the typed text (multiple: add it as a chip).
+          e.preventDefault()
+          const text = query.trim()
+          if (multiple && text) {
+            const match = options.find((o) => o.label.toLowerCase() === text.toLowerCase())
+            commit(match ?? { label: text, value: text, create: true })
+          } else setOpen(false)
+        }
         break
       case 'Escape':
         if (open) { e.preventDefault(); setOpen(false) }
@@ -192,8 +249,8 @@ export function Combobox(props: ComboboxProps) {
     }
   }
 
-  // Single-select: show the selected label when closed; the live query when open.
-  const inputValue = multiple ? query : open ? query : (singleSelected?.label ?? '')
+  // Single-select: show the selected label (or free text) when closed; the live query when open.
+  const inputValue = multiple ? query : open ? query : singleDisplay
 
   const describedBy = cn(error ? errorId : null, hint ? hintId : null) || undefined
   const activeId = open && filtered[activeIndex] ? `${baseId}-opt-${activeIndex}` : undefined
@@ -201,7 +258,7 @@ export function Combobox(props: ComboboxProps) {
   return (
     <div
       className="flex flex-col gap-1.5"
-      {...tcl('Combobox', { multiple, label, placeholder, disabled, error })}
+      {...tcl('Combobox', { multiple, label, placeholder, disabled, error, creatable })}
     >
       {label && (
         <label id={labelId} htmlFor={inputId} className="text-sm font-medium text-text">
@@ -253,6 +310,7 @@ export function Combobox(props: ComboboxProps) {
             aria-autocomplete="list"
             aria-activedescendant={activeId}
             aria-labelledby={label ? labelId : undefined}
+            aria-label={label ? undefined : ariaLabel}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
             disabled={disabled}
@@ -275,7 +333,7 @@ export function Combobox(props: ComboboxProps) {
               ref={listRef}
               id={listId}
               role="listbox"
-              aria-label={label ?? 'Options'}
+              aria-label={label ?? ariaLabel ?? 'Options'}
               aria-multiselectable={multiple || undefined}
               initial={{ opacity: 0, scale: 0.97, y: -4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -289,11 +347,11 @@ export function Combobox(props: ComboboxProps) {
                 </li>
               ) : (
                 filtered.map((opt, i) => {
-                  const isSelected = selectedValues.includes(opt.value)
+                  const isSelected = !opt.create && selectedValues.includes(opt.value)
                   const isActive = i === activeIndex
                   return (
                     <li
-                      key={opt.value}
+                      key={opt.create ? `create:${opt.value}` : opt.value}
                       id={`${baseId}-opt-${i}`}
                       role="option"
                       aria-selected={isSelected}
@@ -307,8 +365,16 @@ export function Combobox(props: ComboboxProps) {
                         isActive && !opt.disabled && 'bg-surface-sunken',
                       )}
                     >
-                      <span>{opt.label}</span>
-                      {isSelected && <Check className="size-4 shrink-0 text-accent" aria-hidden />}
+                      <span>
+                        {opt.create
+                          ? (createLabel?.(opt.value) ?? (
+                              <>
+                                Create <strong className="font-semibold">&ldquo;{opt.value}&rdquo;</strong>
+                              </>
+                            ))
+                          : opt.label}
+                      </span>
+                      {isSelected && !opt.create && <Check className="size-4 shrink-0 text-accent" aria-hidden />}
                     </li>
                   )
                 })

@@ -22,6 +22,12 @@ export interface MenuItem {
   danger?: boolean
   /** Draws a separator above this item. The item itself stays a normal entry. */
   divider?: boolean
+  /** Greyed out, skipped by the keyboard and not selectable. */
+  disabled?: boolean
+  /** Secondary line under the label. */
+  description?: ReactNode
+  /** Overrides the menu's `closeOnSelect` for this item. */
+  closeOnSelect?: boolean
 }
 
 export interface MenuProps {
@@ -30,12 +36,23 @@ export interface MenuProps {
   items: MenuItem[]
   /** Horizontal alignment relative to the trigger. Default `'start'`. */
   align?: 'start' | 'end'
+  /** When false the menu stays open after an item is picked (toggles, multi-pick). Default `true`. */
+  closeOnSelect?: boolean
+  /** Non-interactive block above the items — e.g. the signed-in user and company. */
+  header?: ReactNode
   className?: string
 }
 
 const GAP = 6
 
-export function Menu({ trigger, items, align = 'start', className }: MenuProps) {
+export function Menu({
+  trigger,
+  items,
+  align = 'start',
+  closeOnSelect = true,
+  header,
+  className,
+}: MenuProps) {
   const triggerRef = useRef<HTMLElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -46,7 +63,9 @@ export function Menu({ trigger, items, align = 'start', className }: MenuProps) 
   // Every item is focusable: `divider` only draws a rule above the entry, it
   // does not replace it, so skipping those indices would strand the item
   // (usually the destructive one) out of reach of the keyboard.
-  const selectable = items.map((_, i) => i)
+  // Disabled items are skipped.
+  const selectable = items.flatMap((item, i) => (item.disabled ? [] : [i]))
+  const firstSelectable = selectable[0]
 
   function computeCoords() {
     const el = triggerRef.current
@@ -66,12 +85,12 @@ export function Menu({ trigger, items, align = 'start', className }: MenuProps) 
   }
 
   // Focus the first item once the menu has mounted.
+  // Only on open: re-running on every render would steal focus back to the top
+  // while a `closeOnSelect={false}` menu stays open.
   useLayoutEffect(() => {
-    if (open) {
-      const first = selectable[0]
-      if (first != null) itemRefs.current[first]?.focus()
-    }
-  }, [open, selectable])
+    if (open && firstSelectable != null) itemRefs.current[firstSelectable]?.focus()
+    else if (open) menuRef.current?.focus()
+  }, [open])
 
   // Click-outside closes (no focus return).
   useEffect(() => {
@@ -86,6 +105,7 @@ export function Menu({ trigger, items, align = 'start', className }: MenuProps) 
   }, [open])
 
   function focusAt(pos: number) {
+    if (selectable.length === 0) return
     const clamped = (pos + selectable.length) % selectable.length
     itemRefs.current[selectable[clamped]]?.focus()
   }
@@ -142,8 +162,9 @@ export function Menu({ trigger, items, align = 'start', className }: MenuProps) 
   })
 
   function select(item: MenuItem) {
+    if (item.disabled) return
     item.onSelect?.()
-    closeMenu()
+    if (item.closeOnSelect ?? closeOnSelect) closeMenu()
   }
 
   return (
@@ -156,6 +177,7 @@ export function Menu({ trigger, items, align = 'start', className }: MenuProps) 
               ref={menuRef}
               id={menuId}
               role="menu"
+              tabIndex={-1}
               aria-orientation="vertical"
               onKeyDown={onMenuKeyDown}
               initial={{ opacity: 0, scale: 0.96, y: -4 }}
@@ -172,8 +194,13 @@ export function Menu({ trigger, items, align = 'start', className }: MenuProps) 
                 align === 'end' && '-translate-x-full',
                 className,
               )}
-              {...tcl('Menu', { align })}
+              {...tcl('Menu', { align, closeOnSelect })}
             >
+              {header && (
+                <div role="presentation" className="border-b border-border px-3 pb-2 pt-1.5 text-sm text-text">
+                  {header}
+                </div>
+              )}
               {items.map((item, i) => (
                 <div key={`${item.label}-${i}`}>
                   {item.divider && <div role="separator" className="my-1 h-px bg-border" />}
@@ -183,19 +210,37 @@ export function Menu({ trigger, items, align = 'start', className }: MenuProps) 
                     ref={(el) => {
                       itemRefs.current[i] = el
                     }}
+                    disabled={item.disabled}
+                    aria-disabled={item.disabled || undefined}
                     onClick={() => select(item)}
                     className={cn(
-                      'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
-                      'outline-none hover:bg-surface-sunken focus:bg-surface-sunken',
-                      item.danger ? 'text-danger' : 'text-text',
+                      'flex w-full gap-2.5 px-3 py-2 text-left text-sm transition-colors',
+                      item.description ? 'items-start' : 'items-center',
+                      'outline-none',
+                      item.disabled
+                        ? 'cursor-not-allowed text-text-muted'
+                        : cn(
+                            'hover:bg-surface-sunken focus:bg-surface-sunken',
+                            item.danger ? 'text-danger' : 'text-text',
+                          ),
                     )}
                   >
                     {item.icon && (
-                      <span aria-hidden className="inline-flex size-4 items-center justify-center">
+                      <span
+                        aria-hidden
+                        className={cn('inline-flex size-4 shrink-0 items-center justify-center', item.description && 'mt-0.5')}
+                      >
                         {item.icon}
                       </span>
                     )}
-                    {item.label}
+                    {item.description ? (
+                      <span className="flex min-w-0 flex-col">
+                        <span>{item.label}</span>
+                        <span className="text-xs text-text-muted">{item.description}</span>
+                      </span>
+                    ) : (
+                      item.label
+                    )}
                   </button>
                 </div>
               ))}

@@ -11,7 +11,12 @@ type Size = 'sm' | 'md' | 'lg'
 export interface ModalProps {
   open: boolean
   onClose: () => void
-  title?: string
+  /** Heading of the panel. Plain text or rich content (icon, badge…). */
+  title?: ReactNode
+  /** Muted line under the title; becomes the dialog's accessible description. */
+  description?: ReactNode
+  /** Slot in the header, before the close button — badges, status, extra actions. */
+  actions?: ReactNode
   size?: Size
   children: ReactNode
   footer?: ReactNode
@@ -28,6 +33,8 @@ export function Modal({
   open,
   onClose,
   title,
+  description,
+  actions,
   size = 'md',
   children,
   footer,
@@ -35,6 +42,7 @@ export function Modal({
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
+  const descriptionId = useId()
 
   useScrollLock(open)
   useFocusTrap(open, panelRef, onClose)
@@ -57,6 +65,7 @@ export function Modal({
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? titleId : undefined}
+            aria-describedby={description ? descriptionId : undefined}
             aria-label={title ? undefined : 'Dialog'}
             tabIndex={-1}
             className={cn(
@@ -73,17 +82,28 @@ export function Modal({
             {...tcl('Modal', { open, size, title })}
           >
             <div className="flex items-start justify-between gap-4 px-5 pt-5">
-              {title && (
-                <h2 id={titleId} className="text-lg font-semibold text-text">
-                  {title}
-                </h2>
+              {(title || description) && (
+                <div className="flex min-w-0 flex-col gap-1">
+                  {title && (
+                    <h2 id={titleId} className="text-lg font-semibold text-text">
+                      {title}
+                    </h2>
+                  )}
+                  {description && (
+                    <p id={descriptionId} className="text-sm text-text-muted">
+                      {description}
+                    </p>
+                  )}
+                </div>
               )}
+              {actions && <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>}
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close dialog"
                 className={cn(
-                  'ml-auto inline-flex size-8 shrink-0 items-center justify-center rounded-sm text-text-muted',
+                  !actions && 'ml-auto',
+                  'inline-flex size-8 shrink-0 items-center justify-center rounded-sm text-text-muted',
                   'transition-colors hover:bg-surface-sunken hover:text-text',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
                 )}

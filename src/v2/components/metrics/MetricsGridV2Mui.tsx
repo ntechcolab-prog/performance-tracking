@@ -385,16 +385,15 @@ function EditableKpiCard({
 }
 
 function AddCard({ hidden, onAdd }: { hidden: Kpi[]; onAdd: (key: string) => void }) {
-  // DS Menu closes after every pick (MUI version stayed open until the last
-  // hidden metric was added) and has no disabled item, so the empty state is a
-  // no-op entry.
+  // Stays open while metrics are added; picking the last hidden one closes it.
   const items = hidden.length === 0
-    ? [{ label: 'All metrics are shown.' }]
-    : hidden.map((k) => ({ label: k.label, onSelect: () => onAdd(k.key) }))
+    ? [{ label: 'All metrics are shown.', disabled: true }]
+    : hidden.map((k) => ({ label: k.label, onSelect: () => onAdd(k.key), closeOnSelect: hidden.length === 1 }))
 
   return (
     <Menu
       items={items}
+      closeOnSelect={false}
       className="max-h-60 min-w-[180px] overflow-y-auto"
       trigger={
         <button

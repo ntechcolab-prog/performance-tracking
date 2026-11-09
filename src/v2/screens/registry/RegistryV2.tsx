@@ -7,10 +7,9 @@ import { Search } from 'lucide-react'
 import { Card } from '@/src/ds/components/Card'
 import { Button } from '@/src/ds/components/Button'
 import { Textfield } from '@/src/ds/components/Textfield'
-import { Checkbox } from '@/src/ds/components/Checkbox'
+import { Table, type Column } from '@/src/ds/components/Table'
 import { Badge } from '@/src/ds/components/Badge'
 import { Pagination } from '@/src/ds/components/Pagination'
-import { cn } from '@/src/ds/helpers/cn'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLongOutlined'
 import { REGISTRY_ROWS, type RegistryRow } from '@/src/shared/data/appData'
 import { makeDraft, type BatchForm } from '@/src/shared/data/batchForm'
@@ -22,7 +21,7 @@ import { NEW_BATCH, type AppRoute } from '@/src/v2/routes'
 import type { AppLocation } from '@/src/v2/useAppLocation'
 import BatchEditorV2 from './BatchEditorV2'
 import ExportMenuV2 from './ExportMenuV2'
-import { dsTable, withAlpha } from './ui'
+import { withAlpha } from './ui'
 
 // Registry on the Techco.lab DS. Same data pipeline / business logic as the Tailwind v0/v1
 // screen (search filter → selection → export, New Batch draft, edit existing);
@@ -33,6 +32,14 @@ import { dsTable, withAlpha } from './ui'
 // /registry/new for a draft (see src/v2/routes.ts) — so a link reopens exactly
 // that view. Opening a row, New Batch, Back and the tabs all navigate.
 const COLUMNS = ['Batch ID', 'Recipe', 'Start Date', 'End Date', 'Machine', 'Status']
+const TABLE_COLUMNS: Column<RegistryRow>[] = [
+  { key: 'id', header: COLUMNS[0], className: 'px-6', render: (r) => <span className="font-medium">{r.id}</span> },
+  { key: 'product', header: COLUMNS[1], className: 'px-6' },
+  { key: 'start', header: COLUMNS[2], className: 'px-6', render: (r) => <span className="text-text-muted">{r.start}</span> },
+  { key: 'end', header: COLUMNS[3], className: 'px-6', render: (r) => <span className="text-text-muted">{r.end}</span> },
+  { key: 'line', header: COLUMNS[4], className: 'px-6' },
+  { key: 'status', header: COLUMNS[5], className: 'px-6', render: (r) => <StatusBadge status={r.status} /> },
+]
 const REGISTRY_PRINT_ID = 'registry-batch-log-print-v2'
 const PAGE_SIZE = 10
 
@@ -214,59 +221,21 @@ export default function RegistryV2({ restricted = false, route, navigate }: Prop
           </Box>
         </Box>
 
-        <div id={REGISTRY_PRINT_ID} className={dsTable.wrap}>
-          {/* Plain table in the DS Table look: the DS <Table> has no row click
-              and selects per page, while this list opens a batch on row click and
-              "select all" covers every filtered batch. */}
-          <table className={cn(dsTable.table, 'min-w-[56.75rem]')}>
-            <thead>
-              <tr className={dsTable.headRow}>
-                {!restricted && (
-                  <th scope="col" className={cn(dsTable.th, 'w-px')}>
-                    <Checkbox
-                      checked={allFilteredSelected}
-                      indeterminate={!allFilteredSelected && someFilteredSelected}
-                      onChange={toggleAll}
-                      aria-label={allFilteredSelected ? 'Clear selection' : 'Select all'}
-                    />
-                  </th>
-                )}
-                {COLUMNS.map((c) => <th key={c} scope="col" className={cn(dsTable.th, 'px-6')}>{c}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((r) => {
-                const isSel = selected.has(r.id)
-                return (
-                  <tr
-                    key={r.id}
-                    onClick={() => editExisting(r)}
-                    aria-selected={isSel}
-                    className={cn(dsTable.row, 'cursor-pointer whitespace-nowrap', isSel && 'bg-accent-subtle odd:bg-accent-subtle even:bg-accent-subtle hover:bg-accent-subtle')}
-                  >
-                    {!restricted && (
-                      <td className={cn(dsTable.td, 'w-px')} onClick={(e) => e.stopPropagation()}>
-                        <Checkbox checked={isSel} onChange={() => toggleRow(r.id)} aria-label={`Select ${r.id}`} />
-                      </td>
-                    )}
-                    <td className={cn(dsTable.td, 'px-6 font-medium')}>{r.id}</td>
-                    <td className={cn(dsTable.td, 'px-6')}>{r.product}</td>
-                    <td className={cn(dsTable.td, 'px-6 text-text-muted')}>{r.start}</td>
-                    <td className={cn(dsTable.td, 'px-6 text-text-muted')}>{r.end}</td>
-                    <td className={cn(dsTable.td, 'px-6')}>{r.line}</td>
-                    <td className={cn(dsTable.td, 'px-6')}><StatusBadge status={r.status} /></td>
-                  </tr>
-                )
-              })}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={restricted ? COLUMNS.length : COLUMNS.length + 1} className="px-6 py-10 text-center text-text-muted">
-                    No batches match “{query}”.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        {/* Row click opens the batch; "select all" covers every filtered batch
+            (not just this page), so the header checkbox is delegated. */}
+        <div id={REGISTRY_PRINT_ID}>
+          <Table
+            className="[&_table]:min-w-[56.75rem] [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap"
+            columns={TABLE_COLUMNS}
+            data={visible}
+            onRowClick={editExisting}
+            selectable={!restricted}
+            selectedIds={[...selected]}
+            onSelectionChange={(ids) => setSelected(new Set(ids.map(String)))}
+            onSelectAll={toggleAll}
+            selectAllState={allFilteredSelected ? 'all' : someFilteredSelected ? 'some' : 'none'}
+            empty={<div className="py-7 text-center">No batches match “{query}”.</div>}
+          />
         </div>
 
         {filtered.length > PAGE_SIZE && (

@@ -41,10 +41,7 @@ export default function DetailsDrawerV2({
   open, kind, title, subtitle, batches, kpi, daily, byMachine, byRecipe, richViz, onClose,
 }: DetailsDrawerV2Props) {
   return (
-    // DS Drawer header only takes a string title (it renders its own close
-    // button), so the subtitle opens the body instead.
-    <Drawer side="right" open={open} onClose={onClose} title={title} className="max-w-[30rem]">
-      {subtitle && <p className="-mt-1 mb-4 text-sm text-text-muted">{subtitle}</p>}
+    <Drawer side="right" open={open} onClose={onClose} title={title} description={subtitle || undefined} className="max-w-[30rem]">
       {kind === 'kpi'
         ? <KpiDetail kpi={kpi} daily={daily} byMachine={byMachine} byRecipe={byRecipe} richViz={richViz} />
         : <BatchList batches={batches} />}

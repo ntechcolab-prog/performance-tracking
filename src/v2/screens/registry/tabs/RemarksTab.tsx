@@ -8,10 +8,11 @@ import { Button } from '@/src/ds/components/Button'
 import { IconButton } from '@/src/ds/components/IconButton'
 import { Textarea } from '@/src/ds/components/Textarea'
 import { Tooltip } from '@/src/ds/components/Tooltip'
+import { Table, type Column } from '@/src/ds/components/Table'
 import { cn } from '@/src/ds/helpers/cn'
 import type { RemarksData, NoteRow, ResultsData } from '@/src/shared/data/batchForm'
 import { maskDate, maskTime } from '@/src/shared/lib/masks'
-import { CellInput, SectionCard, dsTable } from '../ui'
+import { CellInput, SectionCard } from '../ui'
 import { EditableCard, useCardEdit } from '../cardEdit'
 import type { ChartNote } from '../SensorChartV2'
 import BatchGraph, { GRAPH_X_LABELS, timeToFrac } from '../BatchGraph'
@@ -79,79 +80,86 @@ export default function RemarksTab({ value, onChange, results }: { value: Remark
   const chartNoteIndex = (n: NoteRow) =>
     chartNotes.findIndex((c) => c.comment === n.comment && c.label.includes(n.time))
 
+  // Cells of the rows drawn outside the DS Table's columns (editors).
+  const td = 'px-4 py-2 text-text'
+  const editTd = cn(td, 'bg-surface-sunken/60')
+  const noteRows = value.notes.map((n, i) => ({ id: i, i, n }))
+  type NoteItem = (typeof noteRows)[number]
+  const noteColumns: Column<NoteItem>[] = [
+    { key: 'n', id: 'date', header: 'DATE', className: 'w-[150px] py-2', render: ({ n }) => <span className="text-text-muted">{n.date}</span> },
+    { key: 'n', id: 'time', header: 'TIME', className: 'w-[130px] py-2', render: ({ n }) => <span className="text-text-muted">{n.time}</span> },
+    {
+      key: 'n',
+      id: 'comment',
+      header: 'COMMENTS',
+      className: 'py-2',
+      render: ({ n }) => (
+        <>
+          {chartNoteIndex(n) >= 0 && (
+            <span className="mr-2 inline-grid size-4 place-items-center rounded-round bg-accent align-middle text-[0.625rem] font-bold text-on-accent">
+              {chartNoteIndex(n) + 1}
+            </span>
+          )}
+          {n.comment}
+        </>
+      ),
+    },
+    {
+      key: 'i',
+      id: 'actions',
+      header: on ? 'ACTIONS' : '',
+      align: 'right',
+      className: 'whitespace-nowrap py-2',
+      render: ({ i }) =>
+        on && (
+          <>
+            <Tooltip content="Edit"><IconButton size="sm" variant="ghost" onClick={() => startEdit(i)} aria-label={`Edit note ${i + 1}`} icon={<Pencil className="size-4" />} /></Tooltip>
+            <Tooltip content="Delete"><IconButton size="sm" variant="ghost" className="text-danger" onClick={() => deleteNote(i)} aria-label={`Delete note ${i + 1}`} icon={<Trash2 className="size-4" />} /></Tooltip>
+          </>
+        ),
+    },
+  ]
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <EditableCard cardId="remarks-notes" title="Notes">
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
           Tip: click a point on the graph below to start a note at that time — it shows up as a numbered marker.
         </Typography>
-        <div className={dsTable.wrap}>
-          <table className={dsTable.table}>
-            <thead>
-              <tr className={dsTable.headRow}>
-                <th scope="col" className={cn(dsTable.th, 'w-[150px] py-2')}>DATE</th>
-                <th scope="col" className={cn(dsTable.th, 'w-[130px] py-2')}>TIME</th>
-                <th scope="col" className={cn(dsTable.th, 'py-2')}>COMMENTS</th>
-                <th scope="col" className={cn(dsTable.th, 'py-2 text-right')}>{on ? 'ACTIONS' : ''}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {value.notes.map((n, i) =>
-                on && editIdx === i ? (
-                  <tr key={i} className="border-b border-border bg-surface-sunken/60">
-                    <td className={cn(dsTable.td, 'py-2')}><CellInput value={editDraft.date} onChange={(e) => setEditDraft({ ...editDraft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label={`Note ${i + 1} date`} /></td>
-                    <td className={cn(dsTable.td, 'py-2')}><CellInput value={editDraft.time} onChange={(e) => setEditDraft({ ...editDraft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label={`Note ${i + 1} time`} /></td>
-                    <td className={cn(dsTable.td, 'py-2')}><CellInput value={editDraft.comment} onChange={(e) => setEditDraft({ ...editDraft, comment: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && saveEdit()} placeholder="Write here" aria-label={`Note ${i + 1} comment`} /></td>
-                    <td className={cn(dsTable.td, 'whitespace-nowrap py-2 text-right')}>
-                      <IconButton size="sm" variant="ghost" className="text-success" onClick={saveEdit} aria-label="Save note" icon={<CircleCheck className="size-4" />} />
-                      <IconButton size="sm" variant="ghost" onClick={() => setEditIdx(null)} aria-label="Cancel" icon={<X className="size-4" />} />
-                    </td>
-                  </tr>
-                ) : (
-                  <tr
-                    key={i}
-                    className={dsTable.row}
-                    onMouseEnter={() => {
-                      const idx = chartNoteIndex(n)
-                      if (idx >= 0) setHoverNote(idx)
-                    }}
-                    onMouseLeave={() => setHoverNote(null)}
-                  >
-                    <td className={cn(dsTable.td, 'py-2 text-text-muted')}>{n.date}</td>
-                    <td className={cn(dsTable.td, 'py-2 text-text-muted')}>{n.time}</td>
-                    <td className={cn(dsTable.td, 'py-2')}>
-                      {chartNoteIndex(n) >= 0 && (
-                        <span className="mr-2 inline-grid size-4 place-items-center rounded-round bg-accent align-middle text-[0.625rem] font-bold text-on-accent">
-                          {chartNoteIndex(n) + 1}
-                        </span>
-                      )}
-                      {n.comment}
-                    </td>
-                    <td className={cn(dsTable.td, 'whitespace-nowrap py-2 text-right')}>
-                      {on && (
-                        <>
-                          <Tooltip content="Edit"><IconButton size="sm" variant="ghost" onClick={() => startEdit(i)} aria-label={`Edit note ${i + 1}`} icon={<Pencil className="size-4" />} /></Tooltip>
-                          <Tooltip content="Delete"><IconButton size="sm" variant="ghost" className="text-danger" onClick={() => deleteNote(i)} aria-label={`Delete note ${i + 1}`} icon={<Trash2 className="size-4" />} /></Tooltip>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                )
-              )}
-              {on && (
+        <Table
+          columns={noteColumns}
+          data={noteRows}
+          // Hovering a note lights up its numbered marker on the graph.
+          onRowHover={(row) => {
+            const idx = row && !(on && editIdx === row.i) ? chartNoteIndex(row.n) : -1
+            setHoverNote(idx >= 0 ? idx : null)
+          }}
+          // The note being edited turns into an inline editor.
+          renderRow={({ i }) =>
+            on && editIdx === i ? (
+              <>
+                <td className={editTd}><CellInput value={editDraft.date} onChange={(e) => setEditDraft({ ...editDraft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label={`Note ${i + 1} date`} /></td>
+                <td className={editTd}><CellInput value={editDraft.time} onChange={(e) => setEditDraft({ ...editDraft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label={`Note ${i + 1} time`} /></td>
+                <td className={editTd}><CellInput value={editDraft.comment} onChange={(e) => setEditDraft({ ...editDraft, comment: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && saveEdit()} placeholder="Write here" aria-label={`Note ${i + 1} comment`} /></td>
+                <td className={cn(editTd, 'whitespace-nowrap text-right')}>
+                  <IconButton size="sm" variant="ghost" className="text-success" onClick={saveEdit} aria-label="Save note" icon={<CircleCheck className="size-4" />} />
+                  <IconButton size="sm" variant="ghost" onClick={() => setEditIdx(null)} aria-label="Cancel" icon={<X className="size-4" />} />
+                </td>
+              </>
+            ) : null
+          }
+          empty={on ? undefined : <div className="py-2">No notes yet.</div>}
+          appendRows={
+            on && (
               <tr className="bg-surface-sunken/60">
-                <td className={cn(dsTable.td, 'py-2')}><CellInput value={draft.date} onChange={(e) => setDraft({ ...draft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label="New note date" /></td>
-                <td className={cn(dsTable.td, 'py-2')}><CellInput value={draft.time} onChange={(e) => setDraft({ ...draft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label="New note time" /></td>
-                <td className={cn(dsTable.td, 'py-2')}><CellInput ref={commentRef} value={draft.comment} onChange={(e) => setDraft({ ...draft, comment: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && addNote()} placeholder="Write here" aria-label="New note comment" /></td>
-                <td className={cn(dsTable.td, 'py-2 text-right')}><Button variant="secondary" size="sm" onClick={addNote} className="whitespace-nowrap">+ Add note</Button></td>
+                <td className={td}><CellInput value={draft.date} onChange={(e) => setDraft({ ...draft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label="New note date" /></td>
+                <td className={td}><CellInput value={draft.time} onChange={(e) => setDraft({ ...draft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label="New note time" /></td>
+                <td className={td}><CellInput ref={commentRef} value={draft.comment} onChange={(e) => setDraft({ ...draft, comment: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && addNote()} placeholder="Write here" aria-label="New note comment" /></td>
+                <td className={cn(td, 'text-right')}><Button variant="secondary" size="sm" onClick={addNote} className="whitespace-nowrap">+ Add note</Button></td>
               </tr>
-              )}
-              {!on && value.notes.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-5 text-text-muted">No notes yet.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            )
+          }
+        />
       </EditableCard>
 
       <SectionCard title="Graph">

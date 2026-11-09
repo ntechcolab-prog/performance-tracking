@@ -3,16 +3,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import type { Theme } from '@mui/material/styles'
 import type { EChartsOption } from 'echarts'
 import EChart from '@/src/v2/components/echarts/EChart'
-import { withAlpha } from '@/src/v2/screens/registry/ui'
 import { Card } from '@/src/ds/components/Card'
 import { Button } from '@/src/ds/components/Button'
 import { IconButton } from '@/src/ds/components/IconButton'
@@ -22,6 +14,7 @@ import { Checkbox } from '@/src/ds/components/Checkbox'
 import { Popover } from '@/src/ds/components/Popover'
 import { Divider } from '@/src/ds/components/Divider'
 import { SegmentedControl } from '@/src/ds/components/SegmentedControl'
+import { Table, type Column, type RowId } from '@/src/ds/components/Table'
 
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
 import AddIcon from '@mui/icons-material/Add'
@@ -50,8 +43,8 @@ import { exportCsv, exportXlsx, type Sheet, type Cell } from '@/src/shared/lib/e
 // v2 Analysis screen. Same business logic as the Tailwind v0/v1 version
 // (saved-analyses list persisted per company + an editor that picks up to 8
 // batches and compares them across metrics as tables / small-multiples charts).
-// Widgets come from the Techco.lab DS; the row-clickable / sticky-column tables
-// stay on MUI Table (the DS Table has no row click, disabled rows or sticky cells).
+// Widgets come from the Techco.lab DS, tables included (row click, disabled rows,
+// pinned first column and hover shared with the charts).
 
 const MAX = 8
 const PRINT_ID = 'analysis-comparison-print-v2'
@@ -76,6 +69,14 @@ interface DraftAnalysis {
   name: string
   batchIds: string[]
 }
+
+// Batch picker columns (the checkbox column comes from the DS Table).
+const PICKER_COLUMNS: Column<Batch>[] = [
+  { key: 'id', header: 'Batch ID', render: (b) => <span className="font-medium">{b.id}</span> },
+  { key: 'machine', header: 'Machine' },
+  { key: 'recipe', header: 'Recipe', render: (b) => <span className="text-text-muted">{b.recipe}</span> },
+  { key: 'month', id: 'date', header: 'Date', className: 'whitespace-nowrap', render: (b) => <span className="text-text-muted">{dateLabel(b)}</span> },
+]
 
 const fmtDate = (iso: string) => {
   const d = new Date(iso)
@@ -119,6 +120,28 @@ export default function AnalysisV2() {
 
   const remove = (id: string) => setAnalyses((prev) => prev.filter((a) => a.id !== id))
 
+  const savedColumns: Column<SavedAnalysis>[] = [
+    { key: 'name', header: 'Name', render: (a) => <span className="font-medium">{a.name}</span> },
+    { key: 'batchIds', header: 'Batches', render: (a) => <span className="text-text-muted">{a.batchIds.length}</span> },
+    { key: 'createdAt', header: 'Created', render: (a) => <span className="text-text-muted">{fmtDate(a.createdAt)}</span> },
+    {
+      key: 'id',
+      id: 'actions',
+      header: <span className="sr-only">Actions</span>,
+      align: 'right',
+      render: (a) => (
+        <IconButton
+          size="sm"
+          variant="ghost"
+          aria-label={`Delete ${a.name}`}
+          onClick={() => remove(a.id)}
+          className="text-text-muted hover:text-danger"
+          icon={<DeleteOutlineIcon fontSize="small" />}
+        />
+      ),
+    },
+  ]
+
   if (editing) {
     return <AnalysisEditor initial={editing} onBack={() => setEditing(null)} onSave={onSave} />
   }
@@ -144,42 +167,12 @@ export default function AnalysisV2() {
             </Typography>
           </Box>
         ) : (
-          <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 500, bgcolor: 'background.default' } }}>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Batches</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell align="right" />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {analyses.map((a) => (
-                  <TableRow
-                    key={a.id}
-                    hover
-                    onClick={() => openExisting(a)}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <TableCell sx={{ fontWeight: 500, color: 'text.primary' }}>{a.name}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{a.batchIds.length}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{fmtDate(a.createdAt)}</TableCell>
-                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                      <IconButton
-                        size="sm"
-                        variant="ghost"
-                        aria-label={`Delete ${a.name}`}
-                        onClick={() => remove(a.id)}
-                        className="text-text-muted hover:text-danger"
-                        icon={<DeleteOutlineIcon fontSize="small" />}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Table
+            density="compact"
+            columns={savedColumns}
+            data={analyses}
+            onRowClick={openExisting}
+          />
         )}
       </Card>
     </Box>
@@ -292,44 +285,27 @@ function AnalysisEditor({
         )}
 
         {/* results */}
-        <TableContainer sx={{ maxHeight: 240, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
-          <Table size="small" stickyHeader={false}>
-            <TableBody>
-              {results.map((b) => {
-                const on = selectedIds.includes(b.id)
-                const disabled = !on && atMax
-                return (
-                  <TableRow
-                    key={b.id}
-                    hover={!disabled}
-                    onClick={() => !disabled && toggle(b.id)}
-                    sx={{
-                      cursor: disabled ? 'not-allowed' : 'pointer',
-                      opacity: disabled ? 0.4 : 1,
-                      bgcolor: on ? 'action.hover' : undefined,
-                    }}
-                  >
-                    <TableCell padding="checkbox">
-                      {/* stop the row's onClick from also toggling (label + input both bubble) */}
-                      <span className="inline-flex pl-3" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          aria-label={`Select ${b.id}`}
-                          checked={on}
-                          disabled={disabled}
-                          onChange={() => toggle(b.id)}
-                        />
-                      </span>
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 500, color: 'text.primary' }}>{b.id}</TableCell>
-                    <TableCell sx={{ color: 'text.primary' }}>{b.machine}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{b.recipe}</TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{dateLabel(b)}</TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Table
+          density="compact"
+          stickyHeader
+          className="max-h-60"
+          columns={PICKER_COLUMNS}
+          data={results}
+          selectable
+          hideSelectAll
+          selectedIds={selectedIds}
+          // The DS hands back the whole id list; route the one that changed
+          // through `toggle` so the MAX cap and pick order stay the same.
+          onSelectionChange={(ids) => {
+            const next = new Set<RowId>(ids)
+            const changed =
+              ids.find((id) => !selectedIds.includes(String(id))) ??
+              selectedIds.find((id) => !next.has(id))
+            if (changed != null) toggle(String(changed))
+          }}
+          onRowClick={(b) => toggle(b.id)}
+          isRowDisabled={(b) => atMax && !selectedIds.includes(b.id)}
+        />
         {atMax && (
           <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'warning.main' }}>
             Maximum of {MAX} batches reached — remove one to add another.
@@ -406,109 +382,97 @@ function ComparisonTable({
     const min = Math.min(...vals)
     return { metric: m, vals, max, min, spread: max !== min }
   })
-  const hover = (id: string) => ({ onMouseEnter: () => onHoverBatch(id), onMouseLeave: () => onHoverBatch(null) })
-  // The pinned cell has to be opaque to cover the columns sliding under it, so
-  // the hover tint goes on as a background image over a solid paper colour
-  // rather than as a translucent background.
-  const stickyCell = (hovered: boolean) => ({
-    position: 'sticky' as const,
-    left: 0,
-    zIndex: 2,
-    bgcolor: 'background.paper',
-    backgroundImage: hovered
-      ? (t: Theme) => `linear-gradient(${withAlpha(t.palette.primary.main, 0.1)}, ${withAlpha(t.palette.primary.main, 0.1)})`
-      : 'none',
-    borderRight: 1,
-    borderColor: 'divider',
-  })
+  // Hover is shared with the charts / insights: the DS Table reports the row
+  // under the pointer and draws `highlightedKey` as highlighted.
+  const rows = batches.map((b, row) => ({ id: b.id, b, row }))
+  type Row = (typeof rows)[number]
+  const tableColumns: Column<Row>[] = [
+    {
+      key: 'id',
+      header: 'Batch ID',
+      render: ({ b }) => (
+        <>
+          <span className="font-medium">{b.id}</span>
+          {(b.startTime || b.endTime) && (
+            <span className="mt-0.5 block text-[0.6875rem] font-normal tabular-nums text-text-subtle">
+              {b.startTime || '—'} – {b.endTime || '—'}
+            </span>
+          )}
+        </>
+      ),
+    },
+    ...columns.map(({ metric: m, vals, max, min, spread }): Column<Row> => ({
+      key: 'b',
+      id: m.key,
+      align: 'right',
+      className: 'tabular-nums',
+      header: (
+        <>
+          {m.label} <span className="font-normal text-text-subtle">({m.unit})</span>
+        </>
+      ),
+      render: ({ b, row }) => {
+        const isMax = spread && vals[row] === max
+        const isMin = spread && vals[row] === min
+        const st = m.stats ? m.stats(b) : null
+        return st ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.25, lineHeight: 1.2 }}>
+            {([
+              ['Max', st.max, false] as const,
+              ['Avg', st.avg, true] as const,
+              ['Min', st.min, false] as const,
+            ]).map(([lbl, val, isAvg]) => (
+              <Box
+                component="span"
+                key={lbl}
+                sx={{
+                  fontWeight: isAvg && (isMax || isMin) ? 600 : 400,
+                  color: isAvg && isMax ? 'success.main' : isAvg && isMin ? 'error.main' : 'inherit',
+                }}
+              >
+                <Box component="span" sx={{ mr: 0.5, fontSize: '0.625rem', textTransform: 'uppercase', color: 'text.disabled' }}>
+                  {lbl}
+                </Box>
+                {fmtNum(m, val)}
+                {isAvg && isMax && <Box component="span" sx={{ ml: 0.5, fontSize: '0.625rem' }}>▲</Box>}
+                {isAvg && isMin && <Box component="span" sx={{ ml: 0.5, fontSize: '0.625rem' }}>▼</Box>}
+              </Box>
+            ))}
+          </Box>
+        ) : (
+          <Box
+            component="span"
+            sx={{
+              fontWeight: isMax || isMin ? 600 : 400,
+              color: isMax ? 'success.main' : isMin ? 'error.main' : 'inherit',
+            }}
+          >
+            {fmtNum(m, vals[row])}
+            {isMax && <Box component="span" sx={{ ml: 0.5, fontSize: '0.625rem' }}>▲</Box>}
+            {isMin && <Box component="span" sx={{ ml: 0.5, fontSize: '0.625rem' }}>▼</Box>}
+          </Box>
+        )
+      },
+    })),
+  ]
 
   return (
-    <TableContainer sx={{ overflowX: 'auto' }}>
-      <Table size="small" sx={{ '& th, & td': { whiteSpace: 'nowrap' } }}>
-        <TableHead>
-          <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 500, bgcolor: 'background.default' } }}>
-            <TableCell sx={{ position: 'sticky', left: 0, zIndex: 3, borderRight: 1, borderColor: 'divider' }}>Batch ID</TableCell>
-            {columns.map(({ metric: m }) => (
-              <TableCell key={m.key} align="right">
-                {m.label} <Box component="span" sx={{ color: 'text.disabled' }}>({m.unit})</Box>
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {batches.map((b, row) => {
-            const hovered = hoverBatch === b.id
-            return (
-              <TableRow key={b.id} {...hover(b.id)} sx={{ bgcolor: hovered ? 'action.hover' : undefined }}>
-                <TableCell component="th" scope="row" sx={{ fontWeight: 500, color: 'text.primary', ...stickyCell(hovered) }}>
-                  {b.id}
-                  {(b.startTime || b.endTime) && (
-                    <Box component="span" sx={{ mt: 0.25, display: 'block', fontSize: '0.6875rem', fontWeight: 400, fontVariantNumeric: 'tabular-nums', color: 'text.disabled' }}>
-                      {b.startTime || '—'} – {b.endTime || '—'}
-                    </Box>
-                  )}
-                </TableCell>
-                {columns.map(({ metric: m, vals, max, min, spread }) => {
-                  const isMax = spread && vals[row] === max
-                  const isMin = spread && vals[row] === min
-                  const st = m.stats ? m.stats(b) : null
-                  return (
-                    <TableCell
-                      key={m.key}
-                      align="right"
-                      sx={{ fontVariantNumeric: 'tabular-nums', color: 'text.primary' }}
-                    >
-                      {st ? (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.25, lineHeight: 1.2 }}>
-                          {([
-                            ['Max', st.max, false] as const,
-                            ['Avg', st.avg, true] as const,
-                            ['Min', st.min, false] as const,
-                          ]).map(([lbl, val, isAvg]) => (
-                            <Box
-                              component="span"
-                              key={lbl}
-                              sx={{
-                                fontWeight: isAvg && (isMax || isMin) ? 600 : 400,
-                                color: isAvg && isMax ? 'success.main' : isAvg && isMin ? 'error.main' : 'inherit',
-                              }}
-                            >
-                              <Box component="span" sx={{ mr: 0.5, fontSize: '0.625rem', textTransform: 'uppercase', color: 'text.disabled' }}>
-                                {lbl}
-                              </Box>
-                              {fmtNum(m, val)}
-                              {isAvg && isMax && <Box component="span" sx={{ ml: 0.5, fontSize: '0.625rem' }}>▲</Box>}
-                              {isAvg && isMin && <Box component="span" sx={{ ml: 0.5, fontSize: '0.625rem' }}>▼</Box>}
-                            </Box>
-                          ))}
-                        </Box>
-                      ) : (
-                        <Box
-                          component="span"
-                          sx={{
-                            fontWeight: isMax || isMin ? 600 : 400,
-                            color: isMax ? 'success.main' : isMin ? 'error.main' : 'inherit',
-                          }}
-                        >
-                          {fmtNum(m, vals[row])}
-                          {isMax && <Box component="span" sx={{ ml: 0.5, fontSize: '0.625rem' }}>▲</Box>}
-                          {isMin && <Box component="span" sx={{ ml: 0.5, fontSize: '0.625rem' }}>▼</Box>}
-                        </Box>
-                      )}
-                    </TableCell>
-                  )
-                })}
-              </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
+    <div>
+      <Table
+        density="compact"
+        stickyFirstColumn
+        className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap"
+        columns={tableColumns}
+        data={rows}
+        onRowHover={(r) => onHoverBatch(r ? r.id : null)}
+        highlightedKey={hoverBatch}
+      />
       <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.disabled' }}>
         <Box component="span" sx={{ color: 'success.main' }}>▲</Box> highest ·{' '}
         <Box component="span" sx={{ color: 'error.main' }}>▼</Box> lowest per metric across the selected batches.
         Sensor parameters report max / min / avg per batch (compared by average).
       </Typography>
-    </TableContainer>
+    </div>
   )
 }
 

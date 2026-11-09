@@ -82,12 +82,14 @@ export default function FiltersV2({
 
           {period === 'weekly' ? (
             <Select
+              aria-label="Week"
               className="min-w-[200px]" value={String(safeWeek)}
               onChange={(v) => setWeekIdx(Number(v))}
               options={weeks.map((w, i) => ({ value: String(i), label: `Week ${i + 1} · ${weekLabel(year, month, w)}` }))}
             />
           ) : (
             <Select
+              aria-label="Month"
               className="min-w-[180px]" value={monthKey}
               onChange={(v) => setMonthKey(v)}
               options={MONTHS.map((m) => ({ value: m.key, label: m.label }))}

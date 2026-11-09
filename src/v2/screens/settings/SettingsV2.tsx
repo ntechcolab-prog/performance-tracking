@@ -15,6 +15,10 @@ import ProductionSettingsV2 from './ProductionSettingsV2'
 // General / Availability / Data Export) and reuses every bit of business logic —
 // the availability hooks/services and the same localStorage keys — so v0/v1 and
 // v2 read and write the same settings.
+// v2 shows Availability (hours per day + planning calendar) next to the shared tabs;
+// v1 keeps its own list in appData.
+const SETTINGS_TABS_V2 = ['General', 'Availability', ...SETTINGS_TABS.filter((t) => t !== 'General')]
+
 export default function SettingsV2() {
   const [tab, setTab] = useState('General')
 
@@ -30,7 +34,7 @@ export default function SettingsV2() {
       <Card className="px-2 pb-1 pt-1">
         <Tabs value={tab} onValueChange={setTab}>
           <TabList aria-label="Settings sections" className="overflow-x-auto overflow-y-hidden border-b-0 pb-1">
-            {SETTINGS_TABS.map((t) => (
+            {SETTINGS_TABS_V2.map((t) => (
               <Tab key={t} value={t} className="whitespace-nowrap py-3">
                 {t}
               </Tab>

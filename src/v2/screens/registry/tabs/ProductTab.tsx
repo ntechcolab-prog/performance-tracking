@@ -8,12 +8,13 @@ import { Button } from '@/src/ds/components/Button'
 import { IconButton } from '@/src/ds/components/IconButton'
 import { Textfield } from '@/src/ds/components/Textfield'
 import { Tooltip } from '@/src/ds/components/Tooltip'
+import { Table, type Column } from '@/src/ds/components/Table'
 import { cn } from '@/src/ds/helpers/cn'
 import UploadIcon from '@mui/icons-material/FileUploadOutlined'
 import type { ProductData, ResultsData } from '@/src/shared/data/batchForm'
 import { ensureVariable, useResultVariables } from '@/src/shared/lib/resultVariables'
 import VariableField from '@/src/v2/components/VariableField'
-import { dsTable, withAlpha } from '../ui'
+import { withAlpha } from '../ui'
 import { EditableCard, useEditing } from '../cardEdit'
 import RichTextField from '@/src/v2/components/RichTextField'
 
@@ -85,6 +86,52 @@ export default function ProductTab({ value, onChange, results, onResultsChange }
     })
   }
 
+  // Cells of the "add" row drawn after the DS Table's data rows.
+  const td = 'px-4 py-2 text-text'
+  type ExpectedRow = { id: string; v: string; val: string }
+  const expectedColumns: Column<ExpectedRow>[] = [
+    { key: 'v', header: 'Variable', className: 'w-[220px] py-2', render: ({ v }) => <span className="font-medium">{v}</span> },
+    {
+      key: 'val',
+      header: 'Expected value',
+      className: 'py-2 tabular-nums',
+      render: ({ v, val }) =>
+        editExpected ? (
+          <div className="w-[120px]">
+            <Textfield
+              value={val}
+              onChange={(e) => setExpected(v, e.target.value)}
+              placeholder="0000"
+              aria-label={`Expected value for ${v}`}
+              className="h-8"
+            />
+          </div>
+        ) : (val || '—'),
+    },
+    ...(editExpected
+      ? [
+          {
+            key: 'id',
+            id: 'actions',
+            header: <span className="sr-only">Actions</span>,
+            className: 'w-[72px] py-2 text-right',
+            render: ({ v }) => (
+              <Tooltip content="Remove">
+                <IconButton
+                  size="sm"
+                  variant="ghost"
+                  className="text-danger"
+                  onClick={() => removeExpected(v)}
+                  aria-label={`Remove ${v}`}
+                  icon={<Trash2 className="size-4" />}
+                />
+              </Tooltip>
+            ),
+          } satisfies Column<ExpectedRow>,
+        ]
+      : []),
+  ]
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <EditableCard cardId="product-info" title="Information">
@@ -108,64 +155,21 @@ export default function ProductTab({ value, onChange, results, onResultsChange }
           in Settings › Production.
         </Typography>
 
-        <div className={cn(dsTable.wrap, 'mt-4')}>
-          <table className={cn(dsTable.table, 'min-w-[420px]')}>
-            <thead>
-              <tr className={dsTable.headRow}>
-                <th scope="col" className={cn(dsTable.th, 'w-[220px] py-2')}>Variable</th>
-                <th scope="col" className={cn(dsTable.th, 'py-2')}>Expected value</th>
-                {editExpected && <th scope="col" className={cn(dsTable.th, 'w-[72px] py-2')}><span className="sr-only">Actions</span></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map(([v, val]) => (
-                <tr key={v} className={dsTable.row}>
-                  <td className={cn(dsTable.td, 'py-2 font-medium')}>{v}</td>
-                  <td className={cn(dsTable.td, 'py-2 tabular-nums')}>
-                    {editExpected ? (
-                      <div className="w-[120px]">
-                        <Textfield
-                          value={val}
-                          onChange={(e) => setExpected(v, e.target.value)}
-                          placeholder="0000"
-                          aria-label={`Expected value for ${v}`}
-                          className="h-8"
-                        />
-                      </div>
-                    ) : (val || '—')}
-                  </td>
-                  {editExpected && (
-                    <td className={cn(dsTable.td, 'py-2 text-right')}>
-                      <Tooltip content="Remove">
-                        <IconButton
-                          size="sm"
-                          variant="ghost"
-                          className="text-danger"
-                          onClick={() => removeExpected(v)}
-                          aria-label={`Remove ${v}`}
-                          icon={<Trash2 className="size-4" />}
-                        />
-                      </Tooltip>
-                    </td>
-                  )}
-                </tr>
-              ))}
-
-              {entries.length === 0 && (
-                <tr className="border-b border-border last:border-0">
-                  <td colSpan={editExpected ? 3 : 2} className="px-4 py-5 text-text-muted">
-                    No expected values yet.
-                  </td>
-                </tr>
-              )}
-
-              {/* input row — only while the card is in edit mode */}
-              {editExpected && (
+        <Table
+          // overflow-visible: the VariableField combobox list in the add row is not
+          // portalled, so the wrapper must not clip it.
+          className="mt-4 overflow-visible [&_table]:min-w-[420px]"
+          columns={expectedColumns}
+          data={entries.map(([v, val]) => ({ id: v, v, val }))}
+          empty={<div className="py-2">No expected values yet.</div>}
+          appendRows={
+            // input row — only while the card is in edit mode
+            editExpected && (
               <tr className="bg-surface">
-                <td className={cn(dsTable.td, 'py-2')}>
+                <td className={td}>
                   <VariableField value={varDraft} onChange={setVarDraft} catalog={catalog} exclude={Object.keys(expected)} />
                 </td>
-                <td className={cn(dsTable.td, 'py-2')}>
+                <td className={td}>
                   <div className="w-[120px]">
                     <Textfield
                       value={valDraft}
@@ -177,16 +181,15 @@ export default function ProductTab({ value, onChange, results, onResultsChange }
                     />
                   </div>
                 </td>
-                <td className={cn(dsTable.td, 'py-2 text-right')}>
+                <td className={cn(td, 'text-right')}>
                   <Button size="sm" variant="secondary" onClick={addExpected} disabled={!varDraft.trim()} className="whitespace-nowrap">
                     + Add
                   </Button>
                 </td>
               </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            )
+          }
+        />
       </EditableCard>
 
       <EditableCard cardId="product-attachments" title="Attachments">

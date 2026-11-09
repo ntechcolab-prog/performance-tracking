@@ -11,13 +11,12 @@ import { Button } from '@/src/ds/components/Button'
 import { Select } from '@/src/ds/components/Select'
 import { Table, type Column } from '@/src/ds/components/Table'
 import { Textfield } from '@/src/ds/components/Textfield'
-import { cn } from '@/src/ds/helpers/cn'
 import type { BatchForm, TargetData } from '@/src/shared/data/batchForm'
 import { BATCH_STATUSES, TARGET_TYPES } from '@/src/shared/data/batchForm'
 import { isLiveMode } from '@/src/shared/data/mockData'
 import { getLiveBatchRecord } from '@/src/v2/live/liveBatchStore'
 import { statusToDisplay } from '@/src/shared/api/adapters'
-import { SectionCard, Stat, KvGroup, KvList, dsTable } from '../ui'
+import { SectionCard, Stat, KvGroup, KvList } from '../ui'
 import { EditableCard, useEditing } from '../cardEdit'
 import BatchGraph, { GRAPH_WINDOW_START_MIN, GRAPH_WINDOW_END_MIN } from '../BatchGraph'
 import { useProductionMonitoring } from '@/src/shared/lib/productionMonitoring'
@@ -478,34 +477,28 @@ function EventTable({
   dot: string
   onHoverRow?: (frac: number | null) => void
 }) {
+  type EventRow = { id: number; time: string; ack: string; message: string }
+  const tableColumns: Column<EventRow>[] = [
+    { key: 'time', header: columns[0], className: 'w-[200px]', render: (r) => <span className="text-text-muted tabular-nums">{r.time}</span> },
+    { key: 'ack', header: columns[1], className: 'w-[200px]', render: (r) => <span className="text-text-muted tabular-nums">{r.ack}</span> },
+    {
+      key: 'message',
+      header: columns[2],
+      render: (r) => (
+        <span className="inline-flex items-center gap-2">
+          <span className="size-1.5 shrink-0 rounded-round" style={{ backgroundColor: dot }} />
+          {r.message}
+        </span>
+      ),
+    },
+  ]
   return (
-    <div className={dsTable.wrap}>
-      <table className={dsTable.table}>
-        <thead>
-          <tr className={dsTable.headRow}>
-            {columns.map((c, i) => <th key={c} scope="col" className={cn(dsTable.th, 'px-3 py-1.5', i < 2 && 'w-[200px]')}>{c}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr
-              key={i}
-              className={dsTable.row}
-              onMouseEnter={() => onHoverRow?.(eventTimeToFrac(r[0]))}
-              onMouseLeave={() => onHoverRow?.(null)}
-            >
-              <td className={cn(dsTable.td, 'px-3 py-1.5 text-text-muted tabular-nums')}>{r[0]}</td>
-              <td className={cn(dsTable.td, 'px-3 py-1.5 text-text-muted tabular-nums')}>{r[1]}</td>
-              <td className={cn(dsTable.td, 'px-3 py-1.5')}>
-                <span className="inline-flex items-center gap-2">
-                  <span className="size-1.5 shrink-0 rounded-round" style={{ backgroundColor: dot }} />
-                  {r[2]}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table
+      density="compact"
+      columns={tableColumns}
+      data={rows.map(([time, ack, message], i) => ({ id: i, time, ack, message }))}
+      // Hovering an event moves the marker on the graph above to its time.
+      onRowHover={onHoverRow ? (r) => onHoverRow(r ? eventTimeToFrac(r.time) : null) : undefined}
+    />
   )
 }

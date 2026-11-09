@@ -15,6 +15,10 @@ export interface SelectProps {
   onChange?: (value: string) => void
   placeholder?: string
   label?: string
+  /** Keeps `label` as the accessible name but hides it visually. */
+  hideLabel?: boolean
+  /** Accessible name when there is no `label` (e.g. a filter in a toolbar). */
+  'aria-label'?: string
   error?: string
   disabled?: boolean
   className?: string
@@ -26,6 +30,8 @@ export function Select({
   onChange,
   placeholder = 'Select…',
   label,
+  hideLabel = false,
+  'aria-label': ariaLabel,
   error,
   disabled,
   className,
@@ -122,14 +128,19 @@ export function Select({
   return (
     <div
       className="flex flex-col gap-1.5"
-      {...tcl('Select', { label, value, placeholder, disabled, error })}
+      {...tcl('Select', { label, value, placeholder, disabled, error, hideLabel })}
     >
       {label && (
-        <span id={labelId} className="text-sm font-medium text-text">
+        <span id={labelId} className={cn('text-sm font-medium text-text', hideLabel && 'sr-only')}>
           {label}
         </span>
       )}
       <div ref={rootRef} className={cn('relative', className)}>
+        {!label && ariaLabel && (
+          <span id={`${triggerId}-name`} className="sr-only">
+            {ariaLabel}
+          </span>
+        )}
         <button
           ref={triggerRef}
           type="button"
@@ -138,7 +149,7 @@ export function Select({
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
-          aria-labelledby={label ? `${labelId} ${triggerId}` : undefined}
+          aria-labelledby={label ? `${labelId} ${triggerId}` : ariaLabel ? `${triggerId}-name ${triggerId}` : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           onClick={() => (open ? closeList(false) : openList())}
@@ -168,6 +179,7 @@ export function Select({
               role="listbox"
               tabIndex={-1}
               aria-labelledby={label ? labelId : undefined}
+              aria-label={label ? undefined : ariaLabel}
               aria-activedescendant={`${baseId}-opt-${activeIndex}`}
               onKeyDown={onListKeyDown}
               initial={{ opacity: 0, scale: 0.97, y: -4 }}

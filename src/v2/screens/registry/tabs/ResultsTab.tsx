@@ -8,12 +8,13 @@ import { Button } from '@/src/ds/components/Button'
 import { Badge } from '@/src/ds/components/Badge'
 import { IconButton } from '@/src/ds/components/IconButton'
 import { Tooltip } from '@/src/ds/components/Tooltip'
+import { Table, type Column } from '@/src/ds/components/Table'
 import { cn } from '@/src/ds/helpers/cn'
 import type { ResultsData, ResultRow } from '@/src/shared/data/batchForm'
 import { maskDate, maskTime } from '@/src/shared/lib/masks'
 import { deltaLabel } from '@/src/shared/lib/expected'
 import { EditableCard, useEditing } from '../cardEdit'
-import { CellInput, dsTable } from '../ui'
+import { CellInput } from '../ui'
 
 const emptyDraft = (vars: string[]): ResultRow => ({
   date: '', time: '', values: Object.fromEntries(vars.map((v) => [v, ''])),
@@ -58,8 +59,32 @@ export default function ResultsTab({ value, onChange }: { value: ResultsData; on
   const hasExpected = Object.keys(value.expected ?? {}).length > 0
   // "Last Sample" = the most recent row that has at least one measured value.
   const lastSample = [...value.rows].reverse().find((r) => value.variables.some((v) => (r.values[v] ?? '') !== ''))
-  const td = cn(dsTable.td, 'py-2')
+  // Cells of the rows drawn outside the DS Table's columns (summary, editors).
+  const td = 'px-4 py-2 text-text'
   const summaryTd = cn(td, 'bg-surface-sunken/60')
+  const editTd = cn(td, 'bg-surface-sunken/60')
+  const tableRows = value.rows.map((r, i) => ({ id: i, i, r }))
+  type Row = (typeof tableRows)[number]
+  const columns: Column<Row>[] = [
+    { key: 'r', id: 'date', header: 'DATE', className: 'py-2', render: ({ r }) => r.date },
+    { key: 'r', id: 'time', header: 'Time', className: 'py-2', render: ({ r }) => <span className="text-text-muted">{r.time}</span> },
+    ...value.variables.map((v): Column<Row> => ({
+      key: 'r', id: `var-${v}`, header: v, className: 'py-2 tabular-nums', render: ({ r }) => r.values[v] || '—',
+    })),
+    {
+      key: 'i',
+      id: 'actions',
+      header: <span className="sr-only">Actions</span>,
+      className: 'whitespace-nowrap py-2 text-right',
+      render: ({ i }) =>
+        on && (
+          <>
+            <Tooltip content="Edit"><IconButton size="sm" variant="ghost" onClick={() => startRowEdit(i)} aria-label={`Edit row ${i + 1}`} icon={<Pencil className="size-4" />} /></Tooltip>
+            <Tooltip content="Delete"><IconButton size="sm" variant="ghost" className="text-danger" onClick={() => removeRow(i)} aria-label={`Delete row ${i + 1}`} icon={<Trash2 className="size-4" />} /></Tooltip>
+          </>
+        ),
+    },
+  ]
   const summaryLabel = 'text-[0.6875rem] font-semibold uppercase tracking-[0.04em] text-text-muted'
 
   return (
@@ -82,112 +107,80 @@ export default function ResultsTab({ value, onChange }: { value: ResultsData; on
         </Box>
       )}
 
-      <div className={cn(dsTable.wrap, 'mt-5')}>
-        <table className={cn(dsTable.table, 'min-w-[640px]')}>
-          <thead>
-            <tr className={dsTable.headRow}>
-              <th scope="col" className={cn(dsTable.th, 'py-2')}>DATE</th>
-              <th scope="col" className={cn(dsTable.th, 'py-2')}>Time</th>
-              {value.variables.map((v) => <th key={v} scope="col" className={cn(dsTable.th, 'py-2')}>{v}</th>)}
-              <th scope="col" className={cn(dsTable.th, 'py-2')}><span className="sr-only">Actions</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Target vs last sample, aligned with each variable column.
-                Only rendered once the batch has at least one expected value. */}
-            {hasExpected && (
-              <>
-                <tr className="border-b border-border">
-                  <td className={cn(summaryTd, summaryLabel)}>Expected</td>
-                  <td className={summaryTd} />
-                  {value.variables.map((v) => (
-                    <td key={v} className={cn(summaryTd, 'tabular-nums')}>
-                      {value.expected?.[v] || '—'}
-                    </td>
-                  ))}
-                  <td className={summaryTd} />
-                </tr>
-                <tr className="border-b-2 border-border">
-                  <td className={cn(summaryTd, 'align-top')}>
-                    <span className={cn(summaryLabel, 'block')}>Last Sample</span>
-                    {lastSample?.date || '—'}
-                  </td>
-                  <td className={cn(summaryTd, 'align-bottom text-text-muted')}>{lastSample?.time || ''}</td>
-                  {value.variables.map((v) => {
-                    const current = lastSample?.values[v] ?? ''
-                    const diff = deltaLabel(value.expected?.[v], current)
-                    return (
-                      <td key={v} className={cn(summaryTd, 'align-bottom tabular-nums')}>
-                        {current || '—'}
-                        {diff && <span className="block text-[0.6875rem] text-text-muted">{diff}</span>}
-                      </td>
-                    )
-                  })}
-                  <td className={summaryTd} />
-                </tr>
-              </>
-            )}
-
-            {value.rows.map((r, i) =>
-              on && editRow === i ? (
-                <tr key={i} className="border-b border-border bg-surface-sunken/60">
-                  <td className={td}><CellInput width={120} value={rowDraft.date} onChange={(e) => setRowDraft({ ...rowDraft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label={`Row ${i + 1} date`} /></td>
-                  <td className={td}><CellInput width={100} value={rowDraft.time} onChange={(e) => setRowDraft({ ...rowDraft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label={`Row ${i + 1} time`} /></td>
-                  {value.variables.map((v) => (
-                    <td key={v} className={td}>
-                      <CellInput width={84} value={rowDraft.values[v] ?? ''} onChange={(e) => setRowDraft({ ...rowDraft, values: { ...rowDraft.values, [v]: e.target.value } })} placeholder="0000" aria-label={`Row ${i + 1} ${v}`} />
-                    </td>
-                  ))}
-                  <td className={cn(td, 'whitespace-nowrap text-right')}>
-                    <IconButton size="sm" variant="ghost" className="text-success" onClick={saveRowEdit} aria-label={`Save row ${i + 1}`} icon={<CircleCheck className="size-4" />} />
-                    <IconButton size="sm" variant="ghost" onClick={() => setEditRow(null)} aria-label="Cancel" icon={<X className="size-4" />} />
-                  </td>
-                </tr>
-              ) : (
-                <tr key={i} className={dsTable.row}>
-                  <td className={td}>{r.date}</td>
-                  <td className={cn(td, 'text-text-muted')}>{r.time}</td>
-                  {value.variables.map((v) => (
-                    <td key={v} className={cn(td, 'tabular-nums')}>{r.values[v] || '—'}</td>
-                  ))}
-                  <td className={cn(td, 'whitespace-nowrap text-right')}>
-                    {on && (
-                      <>
-                        <Tooltip content="Edit"><IconButton size="sm" variant="ghost" onClick={() => startRowEdit(i)} aria-label={`Edit row ${i + 1}`} icon={<Pencil className="size-4" />} /></Tooltip>
-                        <Tooltip content="Delete"><IconButton size="sm" variant="ghost" className="text-danger" onClick={() => removeRow(i)} aria-label={`Delete row ${i + 1}`} icon={<Trash2 className="size-4" />} /></Tooltip>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              )
-            )}
-
-            {value.rows.length === 0 && !on && (
-              <tr>
-                <td colSpan={value.variables.length + 3} className="px-4 py-5 text-text-muted">
-                  No samples yet.
-                </td>
-              </tr>
-            )}
-
-            {/* input row — the last grey row, with + Add row at its end */}
-            {on && (
-              <tr className="bg-surface-sunken/60">
-                <td className={td}><CellInput width={120} value={draft.date} onChange={(e) => setDraft({ ...draft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label="New sample date" /></td>
-                <td className={td}><CellInput width={100} value={draft.time} onChange={(e) => setDraft({ ...draft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label="New sample time" /></td>
+      <Table
+        className="mt-5 [&_table]:min-w-[640px]"
+        columns={columns}
+        data={tableRows}
+        prependRows={
+          hasExpected && (
+            <>
+              <tr className="border-b border-border">
+                <td className={cn(summaryTd, summaryLabel)}>Expected</td>
+                <td className={summaryTd} />
                 {value.variables.map((v) => (
-                  <td key={v} className={td}>
-                    <CellInput width={84} value={draft.values[v] ?? ''} onChange={(e) => setDraft({ ...draft, values: { ...draft.values, [v]: e.target.value } })} onKeyDown={(e) => e.key === 'Enter' && addRow()} placeholder="0000" aria-label={`New sample ${v}`} />
+                  <td key={v} className={cn(summaryTd, 'tabular-nums')}>
+                    {value.expected?.[v] || '—'}
                   </td>
                 ))}
-                <td className={cn(td, 'text-right')}>
-                  <Button size="sm" variant="secondary" onClick={addRow} className="whitespace-nowrap">+ Add row</Button>
-                </td>
+                <td className={summaryTd} />
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              <tr className="border-b-2 border-border">
+                <td className={cn(summaryTd, 'align-top')}>
+                  <span className={cn(summaryLabel, 'block')}>Last Sample</span>
+                  {lastSample?.date || '—'}
+                </td>
+                <td className={cn(summaryTd, 'align-bottom text-text-muted')}>{lastSample?.time || ''}</td>
+                {value.variables.map((v) => {
+                  const current = lastSample?.values[v] ?? ''
+                  const diff = deltaLabel(value.expected?.[v], current)
+                  return (
+                    <td key={v} className={cn(summaryTd, 'align-bottom tabular-nums')}>
+                      {current || '—'}
+                      {diff && <span className="block text-[0.6875rem] text-text-muted">{diff}</span>}
+                    </td>
+                  )
+                })}
+                <td className={summaryTd} />
+              </tr>
+            </>
+          )
+        }
+        // The row being edited turns into an inline editor.
+        renderRow={(row) =>
+          on && editRow === row.i ? (
+            <>
+              <td className={editTd}><CellInput width={120} value={rowDraft.date} onChange={(e) => setRowDraft({ ...rowDraft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label={`Row ${row.i + 1} date`} /></td>
+              <td className={editTd}><CellInput width={100} value={rowDraft.time} onChange={(e) => setRowDraft({ ...rowDraft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label={`Row ${row.i + 1} time`} /></td>
+              {value.variables.map((v) => (
+                <td key={v} className={editTd}>
+                  <CellInput width={84} value={rowDraft.values[v] ?? ''} onChange={(e) => setRowDraft({ ...rowDraft, values: { ...rowDraft.values, [v]: e.target.value } })} placeholder="0000" aria-label={`Row ${row.i + 1} ${v}`} />
+                </td>
+              ))}
+              <td className={cn(editTd, 'whitespace-nowrap text-right')}>
+                <IconButton size="sm" variant="ghost" className="text-success" onClick={saveRowEdit} aria-label={`Save row ${row.i + 1}`} icon={<CircleCheck className="size-4" />} />
+                <IconButton size="sm" variant="ghost" onClick={() => setEditRow(null)} aria-label="Cancel" icon={<X className="size-4" />} />
+              </td>
+            </>
+          ) : null
+        }
+        empty={on ? undefined : <div className="py-2">No samples yet.</div>}
+        appendRows={
+          on && (
+            <tr className="bg-surface-sunken/60">
+              <td className={td}><CellInput width={120} value={draft.date} onChange={(e) => setDraft({ ...draft, date: maskDate(e.target.value) })} placeholder="DD/MM/YYYY" aria-label="New sample date" /></td>
+              <td className={td}><CellInput width={100} value={draft.time} onChange={(e) => setDraft({ ...draft, time: maskTime(e.target.value) })} placeholder="00:00:00" aria-label="New sample time" /></td>
+              {value.variables.map((v) => (
+                <td key={v} className={td}>
+                  <CellInput width={84} value={draft.values[v] ?? ''} onChange={(e) => setDraft({ ...draft, values: { ...draft.values, [v]: e.target.value } })} onKeyDown={(e) => e.key === 'Enter' && addRow()} placeholder="0000" aria-label={`New sample ${v}`} />
+                </td>
+              ))}
+              <td className={cn(td, 'text-right')}>
+                <Button size="sm" variant="secondary" onClick={addRow} className="whitespace-nowrap">+ Add row</Button>
+              </td>
+            </tr>
+          )
+        }
+      />
     </EditableCard>
   )
 }

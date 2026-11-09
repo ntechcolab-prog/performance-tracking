@@ -38,7 +38,7 @@ function StatePill({ state }: { state: LiveBatch['state'] }) {
 
 function ProgressBar({ value }: { value: number }) {
   return (
-    <Progress value={value} />
+    <Progress value={value} tone="info" />
   )
 }
 
@@ -125,16 +125,15 @@ function BatchModal({ batch, onClose }: { batch: LiveBatch; onClose: () => void 
   const massPct = batch.targetMass ? Math.round((batch.currentMass / batch.targetMass) * 100) : 0
 
   return (
-    // DS Modal takes a string title and renders its own close button, so the
-    // state pill + recipe line open the body.
-    <Modal open onClose={onClose} title={`BATCH ${batch.id}`} className="max-w-[600px]">
+    <Modal
+      open
+      onClose={onClose}
+      title={`BATCH ${batch.id}`}
+      description={`${batch.recipe} · ${batch.machine} · ${batch.productionLine}`}
+      actions={<StatePill state={batch.state} />}
+      className="max-w-[600px]"
+    >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: -0.5 }}>
-          <StatePill state={batch.state} />
-          <Typography variant="body2" color="text.secondary">
-            {batch.recipe} · {batch.machine} · {batch.productionLine}
-          </Typography>
-        </Box>
 
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>

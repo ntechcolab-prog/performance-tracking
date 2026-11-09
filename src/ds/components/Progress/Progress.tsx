@@ -3,6 +3,16 @@ import { motion } from 'motion/react'
 import { cn } from '../../helpers/cn'
 import { tcl } from '../../helpers/tcl'
 
+export type ProgressTone = 'accent' | 'info' | 'warning' | 'danger' | 'success'
+
+const toneFill: Record<ProgressTone, string> = {
+  accent: 'bg-accent',
+  info: 'bg-info',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+  success: 'bg-success',
+}
+
 export interface ProgressProps {
   value: number
   /** Upper bound of the scale. Default 100. */
@@ -11,10 +21,19 @@ export interface ProgressProps {
   label?: string
   /** Shows the percentage next to the label. */
   showValue?: boolean
+  /** Colour of the fill. Default `'accent'`. */
+  tone?: ProgressTone
   className?: string
 }
 
-export function Progress({ value, max = 100, label, showValue, className }: ProgressProps) {
+export function Progress({
+  value,
+  max = 100,
+  label,
+  showValue,
+  tone = 'accent',
+  className,
+}: ProgressProps) {
   const labelId = useId()
   const clamped = Math.min(Math.max(value, 0), max)
   const pct = max > 0 ? Math.round((clamped / max) * 100) : 0
@@ -22,7 +41,7 @@ export function Progress({ value, max = 100, label, showValue, className }: Prog
   return (
     <div
       className={cn('flex flex-col gap-1.5', className)}
-      {...tcl('Progress', { value, max, label, showValue })}
+      {...tcl('Progress', { value, max, label, showValue, tone })}
     >
       {(label || showValue) && (
         <div className="flex items-center justify-between text-sm">
@@ -44,7 +63,7 @@ export function Progress({ value, max = 100, label, showValue, className }: Prog
         className="h-2 w-full overflow-hidden rounded-round bg-surface-sunken"
       >
         <motion.div
-          className="h-full rounded-round bg-accent"
+          className={cn('h-full rounded-round', toneFill[tone])}
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}

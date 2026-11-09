@@ -38,3 +38,23 @@ export function toggleSelection<T>(selected: Set<T>, id: T): Set<T> {
 export function isAllSelected<T>(selected: Set<T>, ids: T[]): boolean {
   return ids.length > 0 && ids.every((id) => selected.has(id))
 }
+
+export type SelectAllState = 'none' | 'some' | 'all'
+
+/** What the header checkbox shows for `selected` against the selectable `ids`. */
+export function selectAllState<T>(selected: Set<T>, ids: T[]): SelectAllState {
+  if (isAllSelected(selected, ids)) return 'all'
+  return ids.some((id) => selected.has(id)) ? 'some' : 'none'
+}
+
+const INTERACTIVE = 'a, button, input, select, textarea, label, [role="button"], [role="combobox"], [role="checkbox"], [role="switch"], [role="menuitem"], [contenteditable="true"], [data-row-click-ignore]'
+
+/**
+ * True when `target` sits inside an interactive element nested in `row` (a
+ * button, link, input, an inline editor…), so a row click should be ignored.
+ * Mark any other element with `data-row-click-ignore` to opt it out.
+ */
+export function isInteractiveTarget(target: Element | null, row: Element): boolean {
+  const hit = target?.closest(INTERACTIVE)
+  return !!hit && hit !== row && row.contains(hit)
+}
